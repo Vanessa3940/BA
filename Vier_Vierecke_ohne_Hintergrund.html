@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>App Task</title>
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+  <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background-color: #f0f0f0;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .center-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 200px 200px;
+      grid-template-rows: 200px 200px;
+      gap: 50px;
+      position: relative;
+    }
+
+    .app-box {
+      width: 200px;
+      height: 200px;
+      background-color: #dcdcdc;
+      border: 4px solid gray;
+      border-radius: 25px;
+      position: relative;
+      font-size: 20px;
+      text-align: center;
+      line-height: 170px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .app-box.green {
+      border-color: green;
+    }
+
+    .symbol {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      font-size: 24px;
+      color: black;
+    }
+
+    .symbol.red {
+      color: red;
+    }
+
+    .fixation {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 60px;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body></body>
+<script>
+  const jsPsych = initJsPsych({
+    on_finish: () => jsPsych.data.displayData()
+  });
+
+  const timeline = [];
+
+  const symbols = ['▲', '■', '●', '─'];
+  const symbolNames = ['triangle', 'square', 'circle', 'line'];
+
+  const repetitions = 5;
+  let previousSearchIndex = null;
+
+  function createTrial(sameLocation) {
+    let correctIndex;
+    if (sameLocation && previousSearchIndex !== null) {
+      correctIndex = previousSearchIndex;
+    } else {
+      correctIndex = Math.floor(Math.random() * 4);
+    }
+
+    previousSearchIndex = correctIndex;
+    const trialData = [];
+    for (let i = 0; i < 4; i++) {
+      trialData.push({
+        appName: `App ${i + 1}`,
+        symbol: symbols[i],
+        symbolName: symbolNames[i],
+        isCorrect: i === correctIndex
+      });
+    }
+    return {
+      apps: jsPsych.randomization.shuffle(trialData),
+      correctIndex
+    };
+  }
+
+  function fixationScreen(duration) {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        return `
+          <div class="center-screen">
+            <div class="grid-container">
+              <div class="fixation">+</div>
+              <div class="app-box"></div>
+              <div class="app-box"></div>
+              <div class="app-box"></div>
+              <div class="app-box"></div>
+            </div>
+          </div>
+        `;
+      },
+      choices: "NO_KEYS",
+      trial_duration: duration,
+    };
+  }
+
+  function getSearchTask(trialConfig) {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        let html = `<div class="center-screen"><div class="grid-container">`;
+        trialConfig.apps.forEach((app, index) => {
+          const symbolClass = app.isCorrect ? 'symbol red' : 'symbol';
+          html += `
+            <div class="app-box" data-index="${index}" onclick="selectSearch(${index})">
+              ${app.appName}
+              <div class="${symbolClass}">${app.symbol}</div>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+        return html;
+      },
+      choices: ['Continue'],
+      button_html: '<button id="hidden-button" style="display:none;">%choice%</button>',
+      on_start: () => {
+        window.searchStart = performance.now();
+        window.searchClicked = false;
+      },
+      on_load: function() {
+        window.selectSearch = function(index) {
+          if (window.searchClicked) return;
+          window.searchClicked = true;
+          const boxes = document.querySelectorAll('.app-box');
+          boxes.forEach(b => b.style.borderColor = 'gray');
+          const symbols = document.querySelectorAll('.symbol');
+          symbols.forEach(s => s.classList.remove('red'));
+          setTimeout(() => {
+            jsPsych.finishTrial({
+              task: "search",
+              correct: trialConfig.apps[index].isCorrect,
+              chosen_symbol: trialConfig.apps[index].symbolName,
+              rt: Math.round(performance.now() - window.searchStart),
+              targetIndex: trialConfig.apps.findIndex(app => app.isCorrect)
+            });
+          }, jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]);
+        }
+      }
+    };
+  }
+
+  function getProbeTask(trialConfig) {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        let html = `<div class="center-screen"><div class="grid-container">`;
+        trialConfig.apps.forEach((app, index) => {
+          const boxClass = app.isCorrect ? 'app-box green' : 'app-box';
+          html += `
+            <div class="${boxClass}" data-index="${index}" onclick="selectProbe(${index})">
+              ${app.appName}
+              <div class="symbol">${app.symbol}</div>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+        return html;
+      },
+      choices: ['Continue'],
+      button_html: '<button id="hidden-button" style="display:none;">%choice%</button>',
+      on_start: () => {
+        window.probeStart = performance.now();
+        window.probeClicked = false;
+      },
+      on_load: function() {
+        window.selectProbe = function(index) {
+          if (window.probeClicked) return;
+          window.probeClicked = true;
+          const boxes = document.querySelectorAll('.app-box');
+          boxes.forEach(b => b.style.borderColor = 'gray');
+          setTimeout(() => {
+            jsPsych.finishTrial({
+              task: "probe",
+              correct: trialConfig.apps[index].isCorrect,
+              chosen_position: index,
+              rt: Math.round(performance.now() - window.probeStart)
+            });
+          }, jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]);
+        }
+      }
+    };
+  }
+
+  for (let i = 0; i < repetitions; i++) {
+    const sameLocation = Math.random() < 0.5;
+    const searchTrial = createTrial(false);
+    const probeTrial = createTrial(sameLocation);
+
+    timeline.push(getSearchTask(searchTrial));
+    timeline.push(fixationScreen(jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]));
+    timeline.push(getProbeTask(probeTrial));
+    timeline.push(fixationScreen(jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]));
+  }
+
+  const debrief = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: function() {
+      const searchTrials = jsPsych.data.get().filter({task: 'search'});
+      const probeTrials = jsPsych.data.get().filter({task: 'probe'});
+      const accSearch = Math.round(searchTrials.filter({correct: true}).count() / searchTrials.count() * 100);
+      const rtSearch = Math.round(searchTrials.select('rt').mean());
+      const rtProbe = Math.round(probeTrials.select('rt').mean());
+
+      return `
+        <p><strong>Search Task</strong></p>
+        <p>Accuracy: ${accSearch}%<br>Average RT: ${rtSearch} ms</p>
+        <p><strong>Probe Task</strong></p>
+        <p>Average RT: ${rtProbe} ms</p>
+        <p>Thank you for participating!</p>
+      `;
+    },
+    choices: ['Finish']
+  };
+  timeline.push(debrief);
+
+  jsPsych.run(timeline);
+</script>
+</html>
