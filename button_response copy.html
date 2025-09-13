@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SAP App Task</title>
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
+    <style>
+      /* --- alles wie im Original --- */
+      html, body {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+        overflow: hidden !important;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background: #f5f6f7;
+      }
+      .sap-header {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; z-index: 0;
+        background: #fff;
+        height: 82px;
+        box-shadow: 0 2px 3px 0 rgba(0,0,0,0.05), 0 1px 0px 0 #e2e5e7;
+        border-bottom: 1.5px solid #e2e5e7;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+      }
+      .sap-logo {
+        height: 35px;
+        width: 68px;
+        margin-right: 24px;
+      }
+      .header-menu {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .menu-item {
+        color: #222;
+        font-size: 17px;
+        font-weight: bold;
+        margin-right: 18px;
+        cursor: pointer;
+        padding: 7px 10px;
+        border-radius: 6px;
+      }
+      .menu-item.active {
+        color: #186FDB;
+        border-bottom: 2px solid #186FDB;
+      }
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+      }
+      .header-ico {
+        font-size: 20px;
+        color: #444;
+        background: #f8f8f8;
+        border-radius: 50%;
+        padding: 5px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 2px;
+      }
+      .header-avatar {
+        width: 35px;
+        height: 35px;
+        background: #dbeafe;
+        color: #2981ea;
+        border-radius: 999px;
+        display: flex;
+        align-items: center; justify-content: center;
+        font-size: 18px; font-weight: bold;
+        margin-left: 10px;
+      }
+      .sap-overview {
+        position: fixed;
+        top: 90px; left: 2.3vw; z-index: 0;
+        font-size: 2.0vw; font-weight: bold; color: #262f38;
+        text-shadow: 0 1px 0 #fff;
+        letter-spacing: 0;
+        margin-bottom: 16px;
+      }
+      .sap-grey-bg {
+        position: fixed;
+        top: 125px;
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - 125px);
+        background: linear-gradient(180deg,#F5F7F8 80%,#EDF0F1 100%);
+        z-index: 0;
+      }
+      #jspsych-container,
+      .app-container {
+        width: 100vw;
+        height: calc(100vh - 125px);
+        overflow: hidden;
+        position: relative;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* KORREKTUR 2: Layout-Modell ändern, um Top-Ausrichtung zu erzwingen */
+      #jspsych-container > .jspsych-display-element {
+        display: block !important;         /* Deaktiviert das Flexbox-Zentrierungsmodell */
+        height: auto !important;            /* Verhindert, dass das Element die ganze Höhe einnimmt */
+        padding-top: 40px;                  /* Ein fester Abstand von 40px oben */
+      }
+
+    .app-container {
+      width: 100vw;
+      height: calc(100vh - 125px);
+      overflow: hidden;
+      position: relative;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      width: 100%;
+      height: 100%;
+      gap: 2.5vw;
+      padding: 2.5vw;
+      box-sizing: border-box;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .app-box {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 9vw;
+      max-height: 100%;
+      background-color: white;
+      border: 2px solid #ccc;
+      border-radius: 1vw;
+      box-shadow: 0.2vw 0.2vw 0.5vw rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      user-select: none;
+      text-align: center;
+      font-size: 1.6vw;
+      transition: border 0.2s;
+      z-index: 10;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .empty-app {
+      background: #e4e8ec !important;
+      border: 2px solid #bbb;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .app-box.empty-app:hover {
+      background: #cdd8df !important;
+    }
+      .symbol {
+        font-size: 2vw;
+        color: #555;
+      }
+      .fixation-screen {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: white;
+        font-size: 5vw;
+      }
+      .confirm-box {
+        position: absolute;
+        background-color: #fff;
+        color: #1976d2;
+        padding: 0.2vw 0.7vw;
+        border-radius: 8px;
+        font-size: 1vw;
+        cursor: pointer;
+        z-index: 20;
+        border: 2px solid  #1976d2;
+        font-weight: 500;
+        box-shadow: none;
+        font-family: inherit;
+        width: 4vw;
+        height: 2.2vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .highlight-target {
+        border: 4px solid #888 !important;
+        box-shadow: 0 0 12px #bbb !important;
+      }
+      @media (max-width: 704px) {
+        .sap-overview { font-size: 26px; }
+        .app-box { font-size: 18px; }
+        .symbol { font-size: 23px; }
+        .confirm-box { font-size: 13px; width: 60px; height: 40px; }
+        .app-grid { gap: 2vw; }
+      }
+    </style>
+</head>
+<body>
+<div id="sap-bg">
+  <div class="sap-header">
+    <svg class="sap-logo" width="68" height="35" viewBox="0 0 68 35" xmlns="http://www.w3.org/2000/svg">
+      <rect width="68" height="35" fill="#008FD3" />
+    </svg>
+    <span style="font-size:23px; margin-right:14px; cursor:pointer;">☰</span>
+    <div class="header-menu">
+      <span class="menu-item">Lunivox</span>
+      <span class="menu-item">Trenola</span>
+      <span class="menu-item active">Seraquix <span style="font-size:13px;">▼</span></span>
+    </div>
+    <div class="header-right">
+      <span class="header-ico">🔍</span>
+      <span class="header-ico">📍</span>
+      <span class="header-ico">🎧</span>
+      <span class="header-ico">❓</span>
+      <span class="header-ico">🔔</span>
+      <span class="header-avatar">VM</span>
+    </div>
+  </div>
+  <div class="sap-overview">Equao</div>
+  <div class="sap-grey-bg"></div>
+</div>
+<div id="jspsych-container" style="position:absolute;top:125px;left:0;width:100vw;height:calc(100vh - 125px);z-index:10;"></div>
+<script>
+  // Ergänzungen gegen Scrollen/Window-Resizing
+  window.addEventListener('scroll', function() { window.scrollTo(0,0); });
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+</script>
+<script>
+  // SAP-Hintergrund An/Aus helper
+  function showSAPBackground(show = true) {
+    const sapBg = document.getElementById('sap-bg');
+    if (sapBg) sapBg.style.display = show ? '' : 'none';
+    document.body.style.background = show ? "#f5f6f7" : "white";
+  }
+
+  // ==== KONSTANTEN ====
+  const appNames = [
+    "Limo7", "LiloM", "PikaX", "Pansi2", "MenoL",
+    "Melo0", "Venni9", "Vuma3", "SuniX", "Samr7",
+    "RafiQ",
+    "RapoM", "Keso2", "KanoL", "KariQ",
+  ];
+  const symbols = [
+    '▲',  '■',  '●',  '◆',  '★',  '✚', '☀', '☁', '♞'
+  ];
+  const targetAppDummy = { name: "RafiQ", symbol: '▲' };
+
+  // ==== JSPSYCH INIT ====
+  const jsPsych = initJsPsych({
+    display_element: 'jspsych-container',
+    on_finish: () => jsPsych.data.displayData()
+  });
+
+  // ==== Blöcke mit 50/50 pro Typ ===
+  const totalTrials = 24;
+  const trialsPerBlock = totalTrials / 2;
+
+  function generateProbeArray(n) {
+    let arr = [];
+    for (let i = 0; i < n / 2; i++) arr.push('on-probe');
+    for (let i = 0; i < n / 2; i++) arr.push('off-probe');
+    return jsPsych.randomization.shuffle(arr);
+  }
+  let probeArrBlock1 = generateProbeArray(trialsPerBlock);
+  let probeArrBlock2 = generateProbeArray(trialsPerBlock);
+
+  const preload = {
+    type: jsPsychPreload,
+    images: [],
+    on_load: () => showSAPBackground(false),
+    on_finish: () => showSAPBackground(true)
+  };
+
+  const startPage = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div style="max-width: 900px; margin: 0 auto; text-align: left;">
+        <h2>Willkommen zum Experiment</h2>
+        <p>Das Experiment wird ungefähr 30 Minuten dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
+        <p>Es wird empfohlen, das Experiment an einem Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur durchzuführen, weil Sie die Leertaste brauchen.</p>
+        <p>In diesem Experiment sehen Sie Raster mit App-Kacheln. Zu Beginn jedes Blocks wird Ihnen eine Ziel-App gezeigt. 
+        Ihre Aufgabe ist es, die Ziel-App im nachfolgenden Raster so schnell wie möglich zu entdecken und die Leertaste zu drücken. 
+        Anschließend erscheint ein Feld „Bestätigen“, bei dem Sie ebenfalls so schnell wie möglich die Leertaste drücken sollen.</p>
+        <p>Danach sehen Sie das Raster erneut ohne Inhalte. Bitte klicken Sie auf die Position, an der die Ziel-App zuvor war.</p>
+        <p>Wenn Sie bereit sind, klicken Sie auf „Weiter“, um zu beginnen.</p>
+      </div>
+    `,
+    choices: ['Weiter'],
+    on_load: () => showSAPBackground(false),
+    on_finish: () => showSAPBackground(true)
+  };
+
+  function getShowTarget(targetApp, highlight) {
+      return {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: () => `
+          <div style="max-width:900px; margin:0 auto; text-align:center;">
+            <p><b>Dies ist die Ziel-App für die nächsten Trials.</b><br>
+            Merken Sie sich Name und Symbol!</p>
+            <p> Es gibt während der nächsten Trials kein Feedback für die richtige Aushwahl der Ziel-App Position, ob Ihre Wahl richtig 
+              oder falsch war wird aber dennoch vermerkt.</p>
+            <div style="display:flex; justify-content:center;">
+              <div class="app-box${highlight ? ' highlight-target' : ''}" style="width:9vw; display:inline-flex;">
+                ${targetApp.name}<div class="symbol">${targetApp.symbol}</div>
+              </div>
+            </div>
+            <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um fortzufahren.</b></p>
+          </div>`,
+        choices: [' '],
+        on_load: () => showSAPBackground(false),
+        on_finish: () => showSAPBackground(true)
+      };
+    }
+
+  function getInstructions(blockName, highlight) {
+    const step2_instruction = highlight
+      ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe immer <b>mit einem dunkelgrauen Rahmen markiert</b>. Drücken Sie so schnell wie möglich die <b>Leertaste</b>.`
+      : `Finden Sie die Ziel-App im Raster und drücken Sie so schnell wie möglich die <b>Leertaste</b>.`;
+
+    const stimulus_html = `
+      <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
+        <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">${blockName}</h2>
+        <p>In diesem Block sehen Sie in mehreren Durchgängen ein Raster mit Apps. Ihre Aufgabe ist es, in jedem Durchgang die folgenden Schritte so schnell und genau wie möglich auszuführen:</p>
+        <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
+          <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn und bei einem Wechsel angezeigt wird.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction}</li>
+          <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint an einer zufälligen Stelle. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Leertaste</b>.</li>
+          <li style="margin-bottom: 15px;">Anschließend erscheint ein leeres Raster. Klicken Sie bitte mit der <b>Maus</b> auf die Position, an der sich die Ziel-App zuvor befand.</li>
+        </ol>
+        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter".</p>
+      </div>
+    `;
+
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: stimulus_html,
+      choices: ['Weiter'],
+      on_load: () => showSAPBackground(false),
+      on_finish: () => showSAPBackground(true)
+    };
+  }
+
+  const fixation = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<div style="width:100vw;height:100vh;background:white"></div>',
+    choices: [],
+    trial_duration: 1000,
+    on_load: () => showSAPBackground(true)
+  };
+
+  function renderLayoutRandomGrid(apps, highlightTarget) {
+    let positions = [];
+    for (let row = 1; row <= 4; row++) {
+      for (let col = 1; col <= 6; col++) {
+        positions.push({ row, col });
+      }
+    }
+    for (let i = positions.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+    let usedPositions = positions.slice(0, apps.length);
+
+    let html = `<div class="app-grid">`;
+    usedPositions.forEach((pos, idx) => {
+      let app = apps[idx];
+      let targetClass = (highlightTarget && app.isTarget) ? " highlight-target" : "";
+      html += `<div id="app-${idx}" class="app-box${targetClass}" 
+                style="grid-row: ${pos.row}; grid-column: ${pos.col};">
+                ${app.name}<div class="symbol">${app.symbol}</div>
+              </div>`;
+    });
+    html += "</div>";
+    return html;
+  }
+
+  const layoutRenderers = [renderLayoutRandomGrid];
+  const layoutNames = ["RandomGrid4x6"];
+
+  function getSearchTrial(apps, highlightTarget, blockLabel, getProbeType) {
+    const randomIndex = Math.floor(Math.random() * layoutRenderers.length);
+    const renderer = layoutRenderers[randomIndex];
+    const layoutName = layoutNames[randomIndex];
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        let html = `<div class="app-container">` + renderer(apps, highlightTarget) + `</div>
+        <div style="margin-top:2em; font-size:1.2vw; color:#333;"><b>Drücken Sie die Leertaste sobald Sie die Ziel-App entdeckt haben!</b></div>`;
+        return html;
+      },
+      choices: 'NO_KEYS',
+      data: { block_label: blockLabel },
+      on_load: () => {
+        showSAPBackground(true);
+        jsPsych.data.addProperties({ layout: layoutName });
+
+        window.currentGridApps = apps.map(x => ({...x}));
+        window.gridPositions = [];
+        document.querySelectorAll('.app-box').forEach((box,i) => {
+          window.gridPositions.push({
+            i: i,
+            style: box.getAttribute('style')
+          });
+        });
+        window.memoryCheckTargetIdx = apps.findIndex(a => a.isTarget);
+
+        window.appScreenStart = performance.now();
+        window.appRects = apps.map((a, i) => {
+          const el = document.getElementById('app-' + i).getBoundingClientRect();
+          return {
+            name: a.name,
+            x: el.left,
+            y: el.top,
+            width: el.width,
+            height: el.height,
+            isTarget: a.isTarget
+          }
+        });
+
+        let finished = false;
+        const handler = (e) => {
+          if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) e.preventDefault();
+          if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
+            finished = true;
+            const rt_select = performance.now() - window.appScreenStart;
+            jsPsych.data.addDataToLastTrial({ rt_select: rt_select });
+
+            const targetRectIdx = apps.findIndex(a => a.isTarget);
+            let appRect = document.getElementById('app-' + targetRectIdx).getBoundingClientRect();
+            window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
+
+            const pause = jsPsych.randomization.sampleWithoutReplacement([200, 300, 400, 500], 1)[0];
+            setTimeout(() => showConfirmButton(() => {
+              const confirmPosition = window.confirmPosition;
+              jsPsych.data.addProperties({
+                app1_position_x: window.appPosition.x,
+                app1_position_y: window.appPosition.y,
+                confirm_position_x: confirmPosition.x,
+                confirm_position_y: confirmPosition.y
+              });
+              jsPsych.finishTrial();
+            }, false, getProbeType()), pause);
+
+            document.removeEventListener('keydown', handler, true);
+          }
+        };
+        document.addEventListener('keydown', handler, true);
+      },
+      on_unload: () => {
+        document.onkeydown = null;
+      }
+    };
+  }
+
+  function getMemoryCheckTrial(isPracticeTrial = false) {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        const containerStyle = window.overrideContainerStyle || '';
+        const gridStyle = window.overrideGridStyle || window.gridContainerStyle || '';
+        
+        let html = `<div class="app-container" style="${containerStyle}"><div class="app-grid" style="${gridStyle}">`;
+
+        if (window.overrideGridStyle) {
+            window.currentGridApps.forEach((app, idx) => {
+                html += `<div class="app-box empty-app" data-idx="${idx}" style="cursor:pointer;"></div>`;
+            });
+        } else {
+            window.currentGridApps.forEach((app, idx) => {
+              html += `<div class="app-box empty-app" 
+                            data-idx="${idx}"
+                            style="${window.gridPositions[idx]?.style || ''}; cursor:pointer;">
+                      </div>`;
+            });
+        }
+
+        html += `</div></div>
+          <div style="margin-top:2em; font-size:1.2vw; color:#333;"><b>Bitte klicken Sie auf das Feld, auf dem die Ziel-App gerade war!</b></div>`;
+        return html;
+      },
+      choices: [],
+      response_ends_trial: false,
+      on_load: () => {
+        const allBoxes = document.querySelectorAll('.app-box.empty-app');
+        allBoxes.forEach(div=>{
+          div.style.background = "#e4e8ec";
+          div.innerHTML = '';
+        });
+        
+        allBoxes.forEach(box => {
+          box.addEventListener('click', (e) => {
+            allBoxes.forEach(b => b.style.pointerEvents = 'none');
+
+            const clickedIdx = parseInt(box.getAttribute('data-idx'), 10);
+            const correct = (clickedIdx === window.memoryCheckTargetIdx);
+            
+            box.style.background = correct ? "#b7e7b4" : "#ffd1b9";
+
+            if (isPracticeTrial) {
+              if (correct) {
+                box.innerHTML = '<span style="color: #107E3e; font-weight: bold; font-size: 1.5vw;">Richtig!</span>';
+              } else {
+                box.innerHTML = '<span style="color: #A91D1D; font-weight: bold; font-size: 1.5vw;">Falsch!</span>';
+              }
+            }
+            
+            jsPsych.data.addDataToLastTrial({
+              memorycheck_clicked_idx: clickedIdx,
+              memorycheck_correct: correct,
+              memorycheck_target_idx: window.memoryCheckTargetIdx
+            });
+            
+            const trial_duration = isPracticeTrial ? 1500 : 500;
+            setTimeout(()=>jsPsych.finishTrial(), trial_duration);
+          }, { once: true });
+        });
+      },
+      on_finish: () => {
+        window.gridContainerStyle = '';
+        window.overrideGridStyle = '';
+        window.overrideContainerStyle = '';
+      }
+    }
+  }
+
+  // ==== PRACTICE TRIAL ====
+  function createSinglePracticeTrial(highlight, trialNum, totalTrials) {
+    const distractors = jsPsych.randomization.sampleWithoutReplacement(
+      appNames, 4
+    );
+    const targetIdx = Math.floor(Math.random() * 4);
+    let practiceApps = distractors.map((name, idx) => ({
+      name: name,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      isTarget: false
+    }));
+    practiceApps[targetIdx].isTarget = true;
+    const practiceTarget = practiceApps[targetIdx];
+
+    const showPracticeTarget = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <div style="max-width:900px; margin:0 auto; text-align:center;">
+          <p><b>Übungstrial ${trialNum} von ${totalTrials}</b></p>
+          <p>Das ist Ihre Ziel-App für diesen Übungstrial.</p>
+          <div style="display:flex; justify-content:center;">
+            <div class="app-box${highlight ? ' highlight-target' : ''}" style="width:9vw; display:inline-flex;">
+              ${practiceTarget.name}<div class="symbol">${practiceTarget.symbol}</div>
+            </div>
+          </div>
+          <p>Merken Sie sich diese Ziel-App.<br>Im nächsten Bildschirm:</p>
+          <p><b>Drücken Sie die Leertaste sobald Sie die Ziel-App sehen und dann noch einmal für <b>Bestätigen</b></b>!</p>
+          <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um den Übungstrial zu starten.</b></p>
+        </div>`,
+      choices: [' '],
+      on_load: () => showSAPBackground(false),
+      on_finish: () => showSAPBackground(true)
+    };
+    
+    const practiceSearchTrial = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: () => {
+        const shuffled = jsPsych.randomization.shuffle(practiceApps);
+        window.currentGridApps = shuffled; 
+        window.memoryCheckTargetIdx = shuffled.findIndex(a => a.isTarget);
+
+        const containerStyle = 'display: flex; justify-content: center; align-items: center;';
+        const gridStyle = 'grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); width: 25vw; height: 25vw; gap: 2vw;';
+
+        window.overrideContainerStyle = containerStyle;
+        window.overrideGridStyle = gridStyle;
+
+        let html = `<div class="app-container" style="${containerStyle}">`;
+        html += `<div class="app-grid" style="${gridStyle}">`;
+
+        shuffled.forEach((app, idx) => {
+          let targetClass = (highlight && app.isTarget) ? " highlight-target" : "";
+          html += `<div id="app-${idx}" class="app-box${targetClass}" data-idx="${idx}">
+                    ${app.name}<div class="symbol">${app.symbol}</div>
+                  </div>`;
+        });
+        html += '</div></div>'; 
+        html += `<div style="margin-top:2em; font-size:1.2vw; color:#333;"><b>Drücken Sie die Leertaste sobald Sie die Ziel-App entdeckt haben!</b></div>`;
+        return html;
+      },
+      choices: 'NO_KEYS',
+      data: { block_label: `Übungstrial ${trialNum}` },
+      on_load: () => {
+        showSAPBackground(true);
+
+        window.appRects = [];
+        document.querySelectorAll('.app-box').forEach((box, i) => {
+          const el = box.getBoundingClientRect();
+          window.appRects.push({
+            name: window.currentGridApps[i].name,
+            x: el.left,
+            y: el.top,
+            width: el.width,
+            height: el.height,
+            isTarget: window.currentGridApps[i].isTarget
+          });
+        });
+
+        window.appScreenStart = performance.now();
+
+        let finished = false;
+        const handler = (e) => {
+          if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) e.preventDefault();
+          if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
+            finished = true;
+            const targetElement = document.querySelector(`.app-box[data-idx="${window.memoryCheckTargetIdx}"]`);
+            if (targetElement) {
+                let appRect = targetElement.getBoundingClientRect();
+                window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
+            }
+            showConfirmButton(() => jsPsych.finishTrial(), true); 
+            document.removeEventListener('keydown', handler, true);
+          }
+        };
+        document.addEventListener('keydown', handler, true);
+      }
+    };
+
+    return [showPracticeTarget, practiceSearchTrial, getMemoryCheckTrial(true)];
+  }
+
+  function makePracticeBlock(highlight) {
+    const totalPracticeTrials = 3;
+    const step2_instruction = highlight
+      ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe <b>mit einem dunkelgrauen Rahmen markiert</b>. Drücken Sie so schnell wie möglich die <b>Leertaste</b>.`
+      : `Finden Sie die Ziel-App im Raster und drücken Sie so schnell wie möglich die <b>Leertaste</b>.`;
+
+    const stimulus_html = `
+      <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
+        <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">Übungsrunde</h2>
+        <p>Wir beginnen mit einer kurzen Übungsrunde mit ${totalPracticeTrials} Durchgängen, um den Ablauf kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau wie möglich aus:</p>
+        <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
+          <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen jeweils gezeigt wird.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction}</li>
+          <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Leertaste</b>.</li>
+          <li style="margin-bottom: 15px;">Anschließend erscheint ein leeres Raster. Klicken Sie mit der <b>Maus</b> auf die Position, an der die Ziel-App zuvor war.</li>
+        </ol>
+        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter", um die Übungsrunde zu starten.</p>
+      </div>
+    `;
+
+    const practiceInstructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: stimulus_html,
+      choices: ['Weiter'],
+      on_load: () => showSAPBackground(false),
+      on_finish: () => showSAPBackground(true)
+    };
+
+    const practice_timeline = [practiceInstructions];
+
+    for (let i = 0; i < totalPracticeTrials; i++) {
+        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, totalPracticeTrials);
+        practice_timeline.push(...single_trial_nodes);
+        
+        if (i < totalPracticeTrials - 1) {
+          practice_timeline.push(fixation);
+        }
+    }
+
+    const endPractice = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <div style="font-size: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
+          <p>Die Übungsrunde ist beendet.</p>
+          <p>Der Hauptblock beginnt jetzt.</p>
+          <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um fortzufahren.</b></p>
+        </div>
+      `,
+      choices: [' '],
+      on_load: () => showSAPBackground(false),
+      on_finish: () => showSAPBackground(true)
+    };
+    practice_timeline.push(endPractice);
+
+    return practice_timeline;
+  }
+
+  function makeBlockTrials(highlight, blockLabel, probeArr, blockOrderNumber) {
+    const block = [];
+    let probeCounter = 0;
+    
+    const displayBlockName = `Block ${blockOrderNumber}`;
+    block.push(getInstructions(displayBlockName, highlight));
+    
+    block.push(...makePracticeBlock(highlight));
+
+    const possibleTargets = appNames.slice();
+    const blockTargets = jsPsych.randomization.sampleWithoutReplacement(possibleTargets, 2)
+      .map(name => ({ name: name, symbol: symbols[Math.floor(Math.random() * symbols.length)] }));
+
+    let currentTargetIdx = 0;
+    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+
+    for (let i = 0; i < trialsPerBlock; i++) {
+      if (i === 6) {
+        currentTargetIdx = 1;
+        block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+      }
+      let currentTarget = blockTargets[currentTargetIdx];
+      let distractors = appNames.filter(n => n !== currentTarget.name);
+      let gridApps = jsPsych.randomization.sampleWithoutReplacement(distractors, 14);
+      gridApps.push(currentTarget.name);
+      gridApps = jsPsych.randomization.shuffle(gridApps).map(name => ({
+        name,
+        symbol: name === currentTarget.name ? currentTarget.symbol : symbols[Math.floor(Math.random() * symbols.length)],
+        isTarget: name === currentTarget.name
+      }));
+
+      block.push(getSearchTrial(
+        gridApps,
+        highlight,
+        blockLabel,
+        () => probeArr[probeCounter++]
+      ));
+      block.push(getMemoryCheckTrial(false));
+      block.push(fixation);
+    }
+    return block;
+  }
+
+  const showConfirmButton = (callback, isPractice = false, probeType = null) => {
+    // ... (Diese Funktion bleibt unverändert) ...
+    const confirm = document.createElement('div');
+    confirm.className = 'confirm-box';
+    confirm.textContent = 'Bestätigen';
+
+    const paddingY = window.innerHeight * 0.05;
+    const paddingX = window.innerWidth * 0.05;
+    const topBoundary = window.innerHeight * 0.10;
+    const bottomBoundary = window.innerHeight - paddingY;
+    const leftBoundary = paddingX;
+    const rightBoundary = window.innerWidth - paddingX;
+
+    const buttonW = 75;
+    const buttonH = 40;
+
+    function getOverlapArea(ax, ay, aw, ah, bx, by, bw, bh) {
+      const x_overlap = Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx));
+      const y_overlap = Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, by));
+      return x_overlap * y_overlap;
+    }
+
+    if (!probeType)
+      probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
+
+    let confirmX, confirmY;
+    let tries = 0;
+    const maxTries = 1000;
+    const buttonArea = buttonW * buttonH;
+    let found = false;
+
+    while (tries < maxTries) {
+      confirmX = leftBoundary + Math.random() * (rightBoundary - leftBoundary - buttonW);
+      confirmY = topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH);
+
+      const rects = window.appRects || [];
+      const nonTargetRects = rects.filter(r => !r.isTarget);
+
+      if (probeType === 'on-probe') {
+        found = false;
+        for (let rect of nonTargetRects) {
+          const overlap = getOverlapArea(confirmX, confirmY, buttonW, buttonH, rect.x, rect.y, rect.width, rect.height);
+          if (overlap / buttonArea >= 0.5) {
+            const targetRect = rects.find(r => r.isTarget);
+            let overlapTarget = 0;
+            if (targetRect) {
+              overlapTarget = getOverlapArea(confirmX, confirmY, buttonW, buttonH, targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+            }
+            if (!targetRect || (overlapTarget / buttonArea) < 0.5) {
+              found = true;
+              break;
+            }
+          }
+        }
+        if (found) break;
+      } else {
+        let anyOverlap = false;
+        for (let rect of rects) {
+          const overlap = getOverlapArea(confirmX, confirmY, buttonW, buttonH, rect.x, rect.y, rect.width, rect.height);
+          if (overlap > 0) {
+            anyOverlap = true;
+            break;
+          }
+        }
+        if (!anyOverlap) {
+          found = true;
+          break;
+        }
+      }
+      tries++;
+    }
+
+    confirm.style.left = `${confirmX}px`;
+    confirm.style.top = `${confirmY}px`;
+    document.body.appendChild(confirm);
+
+    setTimeout(() => {
+      const confirmRect = confirm.getBoundingClientRect();
+      window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
+      window.confirmAppearTime = performance.now();
+
+      if (!isPractice) {
+        jsPsych.data.addDataToLastTrial({
+          probe_type: probeType
+        });
+      }
+    }, 0);
+
+    let finished = false;
+    const handler = (e) => {
+      if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) e.preventDefault();
+      if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
+        finished = true;
+        const rt_confirm = performance.now() - window.confirmAppearTime;
+        if (!isPractice) {
+          jsPsych.data.addDataToLastTrial({ rt_confirm });
+        }
+        confirm.remove();
+        document.removeEventListener('keydown', handler, true);
+        callback();
+      }
+    };
+    document.addEventListener('keydown', handler, true);
+  };
+
+
+  // === Timeline ===
+  const block_definitions = [
+    { highlight: false, label: "Test-Block", probes: probeArrBlock1 },
+    { highlight: true, label: "Baseline-Block", probes: probeArrBlock2 }
+  ];
+
+  const randomized_blocks = jsPsych.randomization.shuffle(block_definitions);
+
+  const firstBlock = makeBlockTrials(
+    randomized_blocks[0].highlight,
+    randomized_blocks[0].label,
+    randomized_blocks[0].probes,
+    1 // Dieser Block ist immer "Block 1"
+  );
+
+  const secondBlock = makeBlockTrials(
+    randomized_blocks[1].highlight,
+    randomized_blocks[1].label,
+    randomized_blocks[1].probes,
+    2 // Dieser Block ist immer "Block 2"
+  );
+  
+  const timeline = [preload, startPage, ...firstBlock, ...secondBlock];
+
+  jsPsych.run(timeline);
+</script>
+</body>
+</html>

@@ -1,251 +1,213 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>App Task</title>
+  <title>SAP App Task</title>
   <script src="https://unpkg.com/jspsych@7.3.4"></script>
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
   <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
-
   <style>
     body {
-      background-color: #f0f0f0;
       margin: 0;
-      font-family: sans-serif;
+      padding: 0;
+      font-family: Arial, sans-serif;
     }
 
-    .center-screen {
+    .app-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('img/Home_GL_empty.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+
+
+      padding: 100px 0 80px 45px;
+          /*top  right bottom left */
+      box-sizing: border-box;
+    }
+
+    .app-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 80px;
+    }
+
+    .app-grid-top,
+    .app-grid-bottom {
+      display: grid;
+      grid-template-columns: repeat(3, 180px);
+      grid-auto-rows: 140px;
+      gap: 30px 40px;
+    }
+
+    .app-button {
+      width: 180px;
+      height: 140px;
+      background-color: white;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .app-box {
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+      text-align: center;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      user-select: none;
+      width: 180px;
+      height: 140px;
+    }
+
+    .symbol {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #555;
+    }
+
+    .fixation-screen {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-    }
-
-    .grid-container {
-      display: grid;
-      grid-template-columns: 200px 200px;
-      grid-template-rows: 200px 200px;
-      gap: 50px;
-      position: relative;
-    }
-
-    .app-box {
-      width: 200px;
-      height: 200px;
-      background-color: #dcdcdc;
-      border: 4px solid gray;
-      border-radius: 25px;
-      position: relative;
-      font-size: 20px;
-      text-align: center;
-      line-height: 170px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .app-box.green {
-      border-color: green;
-    }
-
-    .symbol {
-      position: absolute;
-      bottom: 10px;
-      right: 15px;
-      font-size: 24px;
-      color: black;
-    }
-
-    .symbol.red {
-      color: red;
-    }
-
-    .fixation {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      background-color: white;
       font-size: 60px;
+    }
+
+    .confirm-box {
+      position: absolute;
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
       z-index: 10;
     }
   </style>
 </head>
-<body></body>
-<script>
-  const jsPsych = initJsPsych({
-    on_finish: () => jsPsych.data.displayData()
-  });
+<body>
+  <script>
+    const jsPsych = initJsPsych({
+      on_finish: () => jsPsych.data.displayData()
+    });
 
-  const timeline = [];
+    const preload = {
+      type: jsPsychPreload,
+      images: ['img/Home_GL_empty.png']
+    };
 
-  const symbols = ['▲', '■', '●', '─'];
-  const symbolNames = ['triangle', 'square', 'circle', 'line'];
+    const instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>Willkommen zum Experiment.</p><p>Sie sehen gleich eine Ziel-App. Merken Sie sich diese und klicken Sie sie im Anschluss im Suchbildschirm an. Danach erscheint ein "Bestätigen"-Knopf, den Sie ebenfalls klicken müssen.</p>`,
+      choices: ['Weiter']
+    };
 
-  const repetitions = 5;
-  let previousSearchIndex = null;
+    const showTarget = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<div style="text-align:center;"><div class="app-box">App 1<div class="symbol">▲</div></div></div>`,
+      choices: ['Weiter']
+    };
 
-  function createTrial(sameLocation) {
-    let correctIndex;
-    if (sameLocation && previousSearchIndex !== null) {
-      correctIndex = previousSearchIndex;
-    } else {
-      correctIndex = Math.floor(Math.random() * 4);
+    const fixation = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<div class="fixation-screen">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: 1000
+    };
+
+    function createTrial() {
+      let apps = [];
+      const symbols = ['▲', '■', '●', '◆', '★', '✚', '☀', '☁', '♞'];
+      for (let i = 0; i < 9; i++) {
+        apps.push({
+          name: `App ${i + 1}`,
+          symbol: symbols[i],
+          isTarget: i === 0
+        });
+      }
+      return jsPsych.randomization.shuffle(apps);
     }
 
-    previousSearchIndex = correctIndex;
-    const trialData = [];
-    for (let i = 0; i < 4; i++) {
-      trialData.push({
-        appName: `App ${i + 1}`,
-        symbol: symbols[i],
-        symbolName: symbolNames[i],
-        isCorrect: i === correctIndex
+    function getSearchTrial(apps) {
+      return {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: () => {
+          let html = '<div class="app-container"><div class="app-grid">';
+          html += '<div class="app-grid-top">';
+          for (let i = 0; i < 6; i++) {
+            const app = apps[i];
+            html += `<div class="app-box" data-index="${i}" onclick="selectApp(${i})">${app.name}<div class="symbol">${app.symbol}</div></div>`;
+          }
+          html += '</div><div class="app-grid-bottom">';
+          for (let i = 6; i < 9; i++) {
+            const app = apps[i];
+            html += `<div class="app-box" data-index="${i}" onclick="selectApp(${i})">${app.name}<div class="symbol">${app.symbol}</div></div>`;
+          }
+          html += '</div></div></div>';
+          return html;
+        },
+        choices: ['Continue'],
+        button_html: '<button id="hidden-button" style="display:none;">%choice%</button>',
+        on_start: () => {
+          window.appClicked = false;
+        },
+        on_load: function () {
+          const trialApps = jsPsych.timelineVariable('apps');
+          window.selectApp = function (index) {
+            if (window.appClicked) return;
+            const selected = trialApps[index];
+            if (selected.isTarget) {
+              window.appClicked = true;
+              const pause = jsPsych.randomization.sampleWithoutReplacement([200, 300, 400, 500, 600], 1)[0];
+              setTimeout(() => showConfirmButton(() => jsPsych.finishTrial()), pause);
+            }
+          };
+        }
+      };
+    }
+
+    function showConfirmButton(callback) {
+      const confirm = document.createElement('div');
+      confirm.className = 'confirm-box';
+      confirm.innerText = 'Bestätigen';
+      const randX = Math.random() * (window.innerWidth - 150);
+      const randY = Math.random() * (window.innerHeight - 50);
+      confirm.style.left = `${randX}px`;
+      confirm.style.top = `${randY}px`;
+      document.body.appendChild(confirm);
+      confirm.onclick = () => {
+        confirm.remove();
+        callback();
+      };
+    }
+
+    const timeline = [preload, instructions, showTarget, fixation];
+    for (let i = 0; i < 10; i++) {
+      const trialApps = createTrial();
+      timeline.push({
+        timeline: [getSearchTrial(trialApps), fixation],
+        timeline_variables: [{apps: trialApps}]
       });
     }
-    return {
-      apps: jsPsych.randomization.shuffle(trialData),
-      correctIndex
-    };
-  }
-
-  function fixationScreen(duration) {
-    return {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: () => {
-        return `
-          <div class="center-screen">
-            <div class="grid-container">
-              <div class="fixation">+</div>
-              <div class="app-box"></div>
-              <div class="app-box"></div>
-              <div class="app-box"></div>
-              <div class="app-box"></div>
-            </div>
-          </div>
-        `;
-      },
-      choices: "NO_KEYS",
-      trial_duration: duration,
-    };
-  }
-
-  function getSearchTask(trialConfig) {
-    return {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: () => {
-        let html = `<div class="center-screen"><div class="grid-container">`;
-        trialConfig.apps.forEach((app, index) => {
-          const symbolClass = app.isCorrect ? 'symbol red' : 'symbol';
-          html += `
-            <div class="app-box" data-index="${index}" onclick="selectSearch(${index})">
-              ${app.appName}
-              <div class="${symbolClass}">${app.symbol}</div>
-            </div>
-          `;
-        });
-        html += `</div></div>`;
-        return html;
-      },
-      choices: ['Continue'],
-      button_html: '<button id="hidden-button" style="display:none;">%choice%</button>',
-      on_start: () => {
-        window.searchStart = performance.now();
-        window.searchClicked = false;
-      },
-      on_load: function() {
-        window.selectSearch = function(index) {
-          if (window.searchClicked) return;
-          window.searchClicked = true;
-          const boxes = document.querySelectorAll('.app-box');
-          boxes.forEach(b => b.style.borderColor = 'gray');
-          const symbols = document.querySelectorAll('.symbol');
-          symbols.forEach(s => s.classList.remove('red'));
-          setTimeout(() => {
-            jsPsych.finishTrial({
-              task: "search",
-              correct: trialConfig.apps[index].isCorrect,
-              chosen_symbol: trialConfig.apps[index].symbolName,
-              rt: Math.round(performance.now() - window.searchStart),
-              targetIndex: trialConfig.apps.findIndex(app => app.isCorrect)
-            });
-          }, jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]);
-        }
-      }
-    };
-  }
-
-  function getProbeTask(trialConfig) {
-    return {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: () => {
-        let html = `<div class="center-screen"><div class="grid-container">`;
-        trialConfig.apps.forEach((app, index) => {
-          const boxClass = app.isCorrect ? 'app-box green' : 'app-box';
-          html += `
-            <div class="${boxClass}" data-index="${index}" onclick="selectProbe(${index})">
-              ${app.appName}
-              <div class="symbol">${app.symbol}</div>
-            </div>
-          `;
-        });
-        html += `</div></div>`;
-        return html;
-      },
-      choices: ['Continue'],
-      button_html: '<button id="hidden-button" style="display:none;">%choice%</button>',
-      on_start: () => {
-        window.probeStart = performance.now();
-        window.probeClicked = false;
-      },
-      on_load: function() {
-        window.selectProbe = function(index) {
-          if (window.probeClicked) return;
-          window.probeClicked = true;
-          const boxes = document.querySelectorAll('.app-box');
-          boxes.forEach(b => b.style.borderColor = 'gray');
-          setTimeout(() => {
-            jsPsych.finishTrial({
-              task: "probe",
-              correct: trialConfig.apps[index].isCorrect,
-              chosen_position: index,
-              rt: Math.round(performance.now() - window.probeStart)
-            });
-          }, jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]);
-        }
-      }
-    };
-  }
-
-  for (let i = 0; i < repetitions; i++) {
-    const sameLocation = Math.random() < 0.5;
-    const searchTrial = createTrial(false);
-    const probeTrial = createTrial(sameLocation);
-
-    timeline.push(getSearchTask(searchTrial));
-    timeline.push(fixationScreen(jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]));
-    timeline.push(getProbeTask(probeTrial));
-    timeline.push(fixationScreen(jsPsych.randomization.sampleWithoutReplacement([500, 1000, 1500], 1)[0]));
-  }
-
-  const debrief = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: function() {
-      const searchTrials = jsPsych.data.get().filter({task: 'search'});
-      const probeTrials = jsPsych.data.get().filter({task: 'probe'});
-      const accSearch = Math.round(searchTrials.filter({correct: true}).count() / searchTrials.count() * 100);
-      const rtSearch = Math.round(searchTrials.select('rt').mean());
-      const rtProbe = Math.round(probeTrials.select('rt').mean());
-
-      return `
-        <p><strong>Search Task</strong></p>
-        <p>Accuracy: ${accSearch}%<br>Average RT: ${rtSearch} ms</p>
-        <p><strong>Probe Task</strong></p>
-        <p>Average RT: ${rtProbe} ms</p>
-        <p>Thank you for participating!</p>
-      `;
-    },
-    choices: ['Finish']
-  };
-  timeline.push(debrief);
-
-  jsPsych.run(timeline);
-</script>
+    jsPsych.run(timeline);
+  </script>
+</body>
 </html>
