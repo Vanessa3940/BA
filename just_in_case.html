@@ -112,11 +112,10 @@
         box-sizing: border-box;
       }
 
-      /* KORREKTUR 2: Layout-Modell ändern, um Top-Ausrichtung zu erzwingen */
       #jspsych-container > .jspsych-display-element {
-        display: block !important;         /* Deaktiviert das Flexbox-Zentrierungsmodell */
-        height: auto !important;            /* Verhindert, dass das Element die ganze Höhe einnimmt */
-        padding-top: 40px;                  /* Ein fester Abstand von 40px oben */
+        display: block !important;
+        height: auto !important;
+        padding-top: 40px;
       }
 
     .app-container {
@@ -479,6 +478,8 @@
   function getMemoryCheckTrial(isPracticeTrial = false) {
     return {
       type: jsPsychHtmlButtonResponse,
+      choices: [],
+      response_ends_trial: false,
       stimulus: () => {
         const containerStyle = window.overrideContainerStyle || '';
         const gridStyle = window.overrideGridStyle || window.gridContainerStyle || '';
@@ -497,14 +498,21 @@
                       </div>`;
             });
         }
-
-        html += `</div></div>
-          <div style="margin-top:2em; font-size:1.2vw; color:#333;"><b>Bitte klicken Sie auf das Feld, auf dem die Ziel-App gerade war!</b></div>`;
+        html += `</div></div>`;
         return html;
       },
-      choices: [],
-      response_ends_trial: false,
       on_load: () => {
+        const instructionEl = document.createElement('div');
+        instructionEl.style.position = 'absolute';
+        instructionEl.style.top = '135px';
+        instructionEl.style.left = '20px';
+        instructionEl.style.zIndex = '1000';
+        instructionEl.style.fontSize = '1.2vw';
+        instructionEl.style.color = '#333';
+        instructionEl.innerHTML = '<b>Bitte klicken Sie auf das Feld, auf dem die Ziel-App gerade war!</b>';
+        document.body.appendChild(instructionEl);
+        window.tempInstructionText = instructionEl;
+
         const allBoxes = document.querySelectorAll('.app-box.empty-app');
         allBoxes.forEach(div=>{
           div.style.background = "#e4e8ec";
@@ -535,17 +543,144 @@
             });
             
             const trial_duration = isPracticeTrial ? 1500 : 500;
-            setTimeout(()=>jsPsych.finishTrial(), trial_duration);
+            setTimeout(() => jsPsych.finishTrial(), trial_duration);
           }, { once: true });
         });
       },
       on_finish: () => {
+        if (window.tempInstructionText) {
+            window.tempInstructionText.remove();
+            window.tempInstructionText = null;
+        }
         window.gridContainerStyle = '';
         window.overrideGridStyle = '';
         window.overrideContainerStyle = '';
       }
     }
   }
+
+  function getConfirmMemoryCheckTrial(isPracticeTrial = false) {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '', 
+      choices: [],
+      response_ends_trial: false,
+      on_load: () => {
+        showSAPBackground(false);
+        document.getElementById('jspsych-container').style.backgroundColor = 'white';
+        const displayElement = document.querySelector('#jspsych-container .jspsych-display-element');
+        if(displayElement) displayElement.innerHTML = '';
+
+        const correct_pos = window.confirmPosition;
+        if (!correct_pos) {
+            jsPsych.finishTrial();
+            return;
+        }
+
+        const elementsToCleanUp = [];
+
+        const instructionEl = document.createElement('div');
+        instructionEl.style.position = 'absolute';
+        instructionEl.style.top = '20px';
+        instructionEl.style.left = '20px';
+        instructionEl.style.zIndex = '1000';
+        instructionEl.style.fontSize = '1.2vw';
+        instructionEl.style.color = '#333';
+        instructionEl.innerHTML = "<b>Bitte klicken Sie auf die Position, an der der 'Bestätigen' Button gerade war!</b>";
+        document.body.appendChild(instructionEl);
+        elementsToCleanUp.push(instructionEl);
+
+        const buttonW = 0.04 * window.innerWidth > 60 ? 0.04 * window.innerWidth : 60;
+        const buttonH = 0.022 * window.innerWidth > 40 ? 0.022 * window.innerWidth : 40;
+        const min_dist = 200;
+
+        function distance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+
+        function generateFoilPosition(existing_positions) {
+            let foil_pos;
+            let tries = 0;
+            const maxTries = 100;
+            while (tries < maxTries) {
+                tries++;
+                foil_pos = {
+                    x: Math.random() * (window.innerWidth - buttonW - 40) + 20,
+                    y: Math.random() * (window.innerHeight - buttonH - 40) + 20
+                };
+
+                let tooClose = false;
+                for (const pos of existing_positions) {
+                    if (distance(foil_pos, pos) < min_dist) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                if (!tooClose) return foil_pos;
+            }
+            return { x: Math.random() * (window.innerWidth - buttonW), y: Math.random() * (window.innerHeight - buttonH) };
+        }
+
+        const positions_to_check = [correct_pos];
+        const foil1 = generateFoilPosition(positions_to_check);
+        positions_to_check.push(foil1);
+        const foil2 = generateFoilPosition(positions_to_check);
+
+        const all_buttons_data = [ { pos: correct_pos, correct: true }, { pos: foil1, correct: false }, { pos: foil2, correct: false } ];
+        const shuffled_buttons = jsPsych.randomization.shuffle(all_buttons_data);
+
+        shuffled_buttons.forEach(button_data => {
+            const btn = document.createElement('div');
+            btn.className = 'confirm-box';
+            btn.textContent = 'Bestätigen';
+            btn.style.position = 'absolute';
+            btn.style.left = `${button_data.pos.x}px`;
+            btn.style.top = `${button_data.pos.y}px`;
+
+            btn.addEventListener('click', () => {
+                elementsToCleanUp.forEach(b => b.style.pointerEvents = 'none');
+
+                const correct = button_data.correct;
+                jsPsych.data.addDataToLastTrial({
+                    confirm_memorycheck_correct: correct,
+                    confirm_memorycheck_clicked_x: button_data.pos.x,
+                    confirm_memorycheck_clicked_y: button_data.pos.y,
+                    confirm_memorycheck_target_x: correct_pos.x,
+                    confirm_memorycheck_target_y: correct_pos.y,
+                });
+
+                if (isPracticeTrial) {
+                    if (correct) {
+                        btn.style.backgroundColor = '#b7e7b4'; btn.style.borderColor = '#107E3e'; btn.style.color = '#107E3e'; btn.innerHTML = '<span style="font-weight: bold;">Richtig!</span>';
+                    } else {
+                        btn.style.backgroundColor = '#ffd1b9'; btn.style.borderColor = '#A91D1D'; btn.style.color = '#A91D1D'; btn.innerHTML = '<span style="font-weight: bold;">Falsch!</span>';
+                    }
+                } else {
+                    btn.style.backgroundColor = correct ? '#b7e7b4' : '#ffd1b9'; btn.style.borderColor = correct ? '#107E3e' : '#A91D1D';
+                }
+
+                const trial_duration = isPracticeTrial ? 1500 : 500;
+                setTimeout(() => jsPsych.finishTrial(), trial_duration);
+
+            }, { once: true });
+
+            document.body.appendChild(btn);
+            elementsToCleanUp.push(btn);
+        });
+
+        window.tempElements = elementsToCleanUp;
+      },
+      on_finish: () => {
+        if (window.tempElements) {
+            window.tempElements.forEach(el => el.remove());
+            window.tempElements = null;
+        }
+        document.getElementById('jspsych-container').style.backgroundColor = '';
+        showSAPBackground(true);
+      }
+    };
+  }
+
 
   // ==== PRACTICE TRIAL ====
   function createSinglePracticeTrial(highlight, trialNum, totalTrials) {
@@ -645,7 +780,7 @@
       }
     };
 
-    return [showPracticeTarget, practiceSearchTrial, getMemoryCheckTrial(true)];
+    return [showPracticeTarget, practiceSearchTrial, getMemoryCheckTrial(true), getConfirmMemoryCheckTrial(true)];
   }
 
   function makePracticeBlock(highlight) {
@@ -705,6 +840,7 @@
     return practice_timeline;
   }
 
+  // --- ANGEPASSTE FUNKTION ---
   function makeBlockTrials(highlight, blockLabel, probeArr, blockOrderNumber) {
     const block = [];
     let probeCounter = 0;
@@ -720,6 +856,14 @@
 
     let currentTargetIdx = 0;
     block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+
+    // --- ANPASSUNG für garantierte 25% Memory Checks ---
+    // 1. Erstelle eine Liste der Trial-Indizes (0 bis 11)
+    const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
+    // 2. Wähle davon zufällig 3 Indizes aus, an denen ein Memory Check stattfinden soll (25% von 12 = 3).
+    const numberOfChecks = Math.floor(trialsPerBlock * 0.25);
+    const memoryCheckIndices = jsPsych.randomization.sampleWithoutReplacement(allTrialIndices, numberOfChecks);
+    // --- ENDE DER ANPASSUNG ---
 
     for (let i = 0; i < trialsPerBlock; i++) {
       if (i === 6) {
@@ -742,7 +886,19 @@
         blockLabel,
         () => probeArr[probeCounter++]
       ));
-      block.push(getMemoryCheckTrial(false));
+
+      // --- ANPASSUNG FÜR MEMORY CHECKS ---
+      // Prüfe, ob der aktuelle Trial-Index (i) einer der 3 Auserwählten ist.
+      if (memoryCheckIndices.includes(i)) {
+        // Wenn ja, entscheide zufällig (50/50), welcher der beiden Checks gezeigt wird.
+        if (Math.random() < 0.5) {
+          block.push(getMemoryCheckTrial(false));
+        } else {
+          block.push(getConfirmMemoryCheckTrial(false));
+        }
+      }
+      // --- ENDE DER ANPASSUNG ---
+      
       block.push(fixation);
     }
     return block;
