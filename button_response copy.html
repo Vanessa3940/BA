@@ -275,7 +275,7 @@
   });
 
   // ==== Blöcke mit 50/50 pro Typ ===
-  const totalTrials = 24;
+  const totalTrials = 72;
   const trialsPerBlock = totalTrials / 2;
 
   function generateProbeArray(n) {
@@ -304,14 +304,14 @@
         <p>In diesem Experiment sehen Sie Raster mit App-Kacheln. Zu Beginn jedes Blocks wird Ihnen eine Ziel-App gezeigt. 
         Ihre Aufgabe ist es, die Ziel-App im nachfolgenden Raster so schnell wie möglich zu entdecken und die Leertaste zu drücken. 
         Anschließend erscheint ein Feld „Bestätigen“, bei dem Sie ebenfalls so schnell wie möglich die Leertaste drücken sollen.</p>
-        <p>Danach sehen Sie das Raster erneut ohne Inhalte. Bitte klicken Sie auf die Position, an der die Ziel-App zuvor war.</p>
+        <p>Im Anschluss an einen Durchgang können kurze Gedächtnistests folgen, in denen Ihre Aufmerksamkeit überprüft wird.</p>
         <p>Wenn Sie bereit sind, klicken Sie auf „Weiter“, um zu beginnen.</p>
       </div>
     `,
     choices: ['Weiter'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true)
-  };
+};
 
   function getShowTarget(targetApp, highlight) {
       return {
@@ -320,7 +320,7 @@
           <div style="max-width:900px; margin:0 auto; text-align:center;">
             <p><b>Dies ist die Ziel-App für die nächsten Trials.</b><br>
             Merken Sie sich Name und Symbol!</p>
-            <p> Es gibt während der nächsten Trials kein Feedback für die richtige Aushwahl der Ziel-App Position, ob Ihre Wahl richtig 
+            <p> Es gibt während der nächsten Trials kein Feedback für die richtige Aushwahl der Ziel-App oder "Bestätigen" Button Position, ob Ihre Wahl richtig 
               oder falsch war wird aber dennoch vermerkt.</p>
             <div style="display:flex; justify-content:center;">
               <div class="app-box${highlight ? ' highlight-target' : ''}" style="width:9vw; display:inline-flex;">
@@ -335,7 +335,7 @@
       };
     }
 
-  function getInstructions(blockName, highlight) {
+    function getInstructions(blockName, highlight) {
     const step2_instruction = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe immer <b>mit einem dunkelgrauen Rahmen markiert</b>. Drücken Sie so schnell wie möglich die <b>Leertaste</b>.`
       : `Finden Sie die Ziel-App im Raster und drücken Sie so schnell wie möglich die <b>Leertaste</b>.`;
@@ -348,7 +348,7 @@
           <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn und bei einem Wechsel angezeigt wird.</li>
           <li style="margin-bottom: 15px;">${step2_instruction}</li>
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint an einer zufälligen Stelle. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Leertaste</b>.</li>
-          <li style="margin-bottom: 15px;">Anschließend erscheint ein leeres Raster. Klicken Sie bitte mit der <b>Maus</b> auf die Position, an der sich die Ziel-App zuvor befand.</li>
+          <li style="margin-bottom: 15px;">Nach einigen Durchgängen folgt ein kurzer Gedächtnistest. Sie werden dann gebeten, <b>entweder</b> die Position der Ziel-App <b>oder</b> die Position des „Bestätigen“-Buttons per Mausklick anzugeben. Es treten niemals beide Tests direkt nacheinander auf.</li>
         </ol>
         <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter".</p>
       </div>
@@ -559,6 +559,7 @@
     }
   }
 
+  // ########### HIER IST DIE ÄNDERUNG ###########
   function getConfirmMemoryCheckTrial(isPracticeTrial = false) {
     return {
       type: jsPsychHtmlButtonResponse,
@@ -650,13 +651,22 @@
                 });
 
                 if (isPracticeTrial) {
+                    // Feedback nur für Übungs-Trials
                     if (correct) {
                         btn.style.backgroundColor = '#b7e7b4'; btn.style.borderColor = '#107E3e'; btn.style.color = '#107E3e'; btn.innerHTML = '<span style="font-weight: bold;">Richtig!</span>';
                     } else {
                         btn.style.backgroundColor = '#ffd1b9'; btn.style.borderColor = '#A91D1D'; btn.style.color = '#A91D1D'; btn.innerHTML = '<span style="font-weight: bold;">Falsch!</span>';
                     }
                 } else {
-                    btn.style.backgroundColor = correct ? '#b7e7b4' : '#ffd1b9'; btn.style.borderColor = correct ? '#107E3e' : '#A91D1D';
+                    // --- ÄNDERUNG START ---
+                    // ALT: Gab Feedback für richtig/falsch
+                    // btn.style.backgroundColor = correct ? '#b7e7b4' : '#ffd1b9'; 
+                    // btn.style.borderColor = correct ? '#107E3e' : '#A91D1D';
+
+                    // NEU: Gibt nur neutrales Feedback, dass geklickt wurde, unabhängig von Korrektheit.
+                    btn.style.backgroundColor = '#dcdcdc'; // Ein neutrales Grau
+                    btn.style.borderColor = '#aaaaaa'; // Ein passender grauer Rand
+                    // --- ÄNDERUNG ENDE ---
                 }
 
                 const trial_duration = isPracticeTrial ? 1500 : 500;
@@ -709,6 +719,7 @@
           </div>
           <p>Merken Sie sich diese Ziel-App.<br>Im nächsten Bildschirm:</p>
           <p><b>Drücken Sie die Leertaste sobald Sie die Ziel-App sehen und dann noch einmal für <b>Bestätigen</b></b>!</p>
+          <p><b>In den Übungstrials werden beide Arten des Gedächtnistests geübt, während der tatsächlichen Trials gibt es entweder gar keinen Test oder nur einen von beiden.</b></p>
           <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um den Übungstrial zu starten.</b></p>
         </div>`,
       choices: [' '],
@@ -797,7 +808,7 @@
           <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen jeweils gezeigt wird.</li>
           <li style="margin-bottom: 15px;">${step2_instruction}</li>
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Leertaste</b>.</li>
-          <li style="margin-bottom: 15px;">Anschließend erscheint ein leeres Raster. Klicken Sie mit der <b>Maus</b> auf die Position, an der die Ziel-App zuvor war.</li>
+          <li style="margin-bottom: 15px;">Anschließend werden Sie zu Übungszwecken gebeten, nacheinander sowohl die Position der <b>Ziel-App</b> als auch die Position des <b>"Bestätigen"-Buttons</b> per Mausklick anzugeben.</li>
         </ol>
         <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter", um die Übungsrunde zu starten.</p>
       </div>
@@ -1038,3 +1049,4 @@
 </script>
 </body>
 </html>
+
