@@ -8,7 +8,30 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
     <style>
-      /* --- alles wie im Original --- */
+
+    
+    /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
+    im JavaScript-Code geben. */
+      .jspsych-trial.vertically-centered-content .jspsych-display-element {
+          display: flex;
+          flex-direction: column;
+          justify-content: center; /* Zentriert den Inhalt vertikal */
+          height: 100%;            /* Füllt den gesamten verfügbaren Platz aus */
+      }
+
+      /* Diese Regel verhindert, dass unser App-Grid von der Zentrierung betroffen ist,
+        und behebt das Problem der Rechtsverschiebung. */
+      .jspsych-display-element {
+          width: 100%;
+      }
+
+      /* Passt die Breite der Textblöcke NUR auf den zentrierten Seiten an */
+      .jspsych-trial.vertically-centered-content .jspsych-display-element > div {
+        max-width: 900px; /* Behält die maximale Breite für Lesbarkeit bei */
+        width: 100%;
+        text-align: left; /* Stellt sicher, dass der Text linksbündig bleibt */
+      }
+      
       html, body {
         width: 100vw;
         height: 100vh;
@@ -110,12 +133,6 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-      }
-
-      #jspsych-container > .jspsych-display-element {
-        display: block !important;
-        height: auto !important;
-        padding-top: 40px;
       }
 
     .app-container {
@@ -252,8 +269,26 @@
   // SAP-Hintergrund An/Aus helper
   function showSAPBackground(show = true) {
     const sapBg = document.getElementById('sap-bg');
-    if (sapBg) sapBg.style.display = show ? '' : 'none';
-    document.body.style.background = show ? "#f5f6f7" : "white";
+    const jspsychContainer = document.getElementById('jspsych-container');
+
+    if (show) { 
+      // === STIL FÜR GRID-TRIALS (MIT SAP-HINTERGRUND) ===
+      if (sapBg) sapBg.style.display = '';
+      document.body.style.background = "#f5f6f7";
+      if (jspsychContainer) {
+        jspsychContainer.style.top = '125px';
+        jspsychContainer.style.height = 'calc(100vh - 125px)';
+      }
+    } else { 
+      // === STIL FÜR TEXT-TRIALS (OHNE SAP-HINTERGRUND) ===
+      if (sapBg) sapBg.style.display = 'none';
+      document.body.style.background = "white";
+      if (jspsychContainer) {
+        // Wir setzen den Container auf volle Bildschirmhöhe
+        jspsychContainer.style.top = '0px';
+        jspsychContainer.style.height = '100vh';
+      }
+    }
   }
 
   // ==== KONSTANTEN ====
@@ -264,9 +299,8 @@
     "RapoM", "Keso2", "KanoL", "KariQ",
   ];
   const symbols = [
-    '▲',  '■',  '●',  '◆',  '★',  '✚', '☀', '☁', '♞'
+    '▲\uFE0E',  '■\uFE0E',  '●\uFE0E',  '◆\uFE0E',  '★\uFE0E',  '✚\uFE0E', '☀\uFE0E', '☁\uFE0E', '♞\uFE0E'
   ];
-  const targetAppDummy = { name: "RafiQ", symbol: '▲' };
 
   // ==== JSPSYCH INIT ====
   const jsPsych = initJsPsych({
@@ -309,6 +343,7 @@
       </div>
     `,
     choices: ['Weiter'],
+    css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true)
 };
@@ -330,6 +365,7 @@
             <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um fortzufahren.</b></p>
           </div>`,
         choices: [' '],
+        css_classes: ['vertically-centered-content'],
         on_load: () => showSAPBackground(false),
         on_finish: () => showSAPBackground(true)
       };
@@ -358,6 +394,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: stimulus_html,
       choices: ['Weiter'],
+      css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true)
     };
@@ -559,7 +596,7 @@
     }
   }
 
-  // ########### HIER IST DIE ÄNDERUNG ###########
+  // ########### HIER IST DIE 1. ÄNDERUNG ###########
   function getConfirmMemoryCheckTrial(isPracticeTrial = false) {
     return {
       type: jsPsychHtmlButtonResponse,
@@ -567,8 +604,6 @@
       choices: [],
       response_ends_trial: false,
       on_load: () => {
-        showSAPBackground(false);
-        document.getElementById('jspsych-container').style.backgroundColor = 'white';
         const displayElement = document.querySelector('#jspsych-container .jspsych-display-element');
         if(displayElement) displayElement.innerHTML = '';
 
@@ -582,7 +617,7 @@
 
         const instructionEl = document.createElement('div');
         instructionEl.style.position = 'absolute';
-        instructionEl.style.top = '20px';
+        instructionEl.style.top = '135px';
         instructionEl.style.left = '20px';
         instructionEl.style.zIndex = '1000';
         instructionEl.style.fontSize = '1.2vw';
@@ -599,15 +634,23 @@
             return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
         }
 
+        // === START DER ÄNDERUNG INNERHALB DER FUNKTION ===
         function generateFoilPosition(existing_positions) {
             let foil_pos;
             let tries = 0;
             const maxTries = 100;
+            
+            // Wir verwenden hier die gleiche Logik wie in showConfirmButton für konsistente Grenzen
+            const minimumTopInPixels = 140;
+            const topBoundary = Math.max(minimumTopInPixels, window.innerHeight * 0.10);
+            const bottomBoundary = window.innerHeight - (window.innerHeight * 0.05);
+
             while (tries < maxTries) {
                 tries++;
                 foil_pos = {
                     x: Math.random() * (window.innerWidth - buttonW - 40) + 20,
-                    y: Math.random() * (window.innerHeight - buttonH - 40) + 20
+                    // Die Y-Position wird nun innerhalb der sicheren Grenzen berechnet
+                    y: topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH)
                 };
 
                 let tooClose = false;
@@ -619,8 +662,10 @@
                 }
                 if (!tooClose) return foil_pos;
             }
-            return { x: Math.random() * (window.innerWidth - buttonW), y: Math.random() * (window.innerHeight - buttonH) };
+            // Fallback, falls keine gute Position gefunden wird
+            return { x: Math.random() * (window.innerWidth - buttonW), y: topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH) };
         }
+        // === ENDE DER ÄNDERUNG INNERHALB DER FUNKTION ===
 
         const positions_to_check = [correct_pos];
         const foil1 = generateFoilPosition(positions_to_check);
@@ -651,22 +696,14 @@
                 });
 
                 if (isPracticeTrial) {
-                    // Feedback nur für Übungs-Trials
                     if (correct) {
                         btn.style.backgroundColor = '#b7e7b4'; btn.style.borderColor = '#107E3e'; btn.style.color = '#107E3e'; btn.innerHTML = '<span style="font-weight: bold;">Richtig!</span>';
                     } else {
                         btn.style.backgroundColor = '#ffd1b9'; btn.style.borderColor = '#A91D1D'; btn.style.color = '#A91D1D'; btn.innerHTML = '<span style="font-weight: bold;">Falsch!</span>';
                     }
                 } else {
-                    // --- ÄNDERUNG START ---
-                    // ALT: Gab Feedback für richtig/falsch
-                    // btn.style.backgroundColor = correct ? '#b7e7b4' : '#ffd1b9'; 
-                    // btn.style.borderColor = correct ? '#107E3e' : '#A91D1D';
-
-                    // NEU: Gibt nur neutrales Feedback, dass geklickt wurde, unabhängig von Korrektheit.
-                    btn.style.backgroundColor = '#dcdcdc'; // Ein neutrales Grau
-                    btn.style.borderColor = '#aaaaaa'; // Ein passender grauer Rand
-                    // --- ÄNDERUNG ENDE ---
+                    btn.style.backgroundColor = '#dcdcdc';
+                    btn.style.borderColor = '#aaaaaa';
                 }
 
                 const trial_duration = isPracticeTrial ? 1500 : 500;
@@ -685,8 +722,6 @@
             window.tempElements.forEach(el => el.remove());
             window.tempElements = null;
         }
-        document.getElementById('jspsych-container').style.backgroundColor = '';
-        showSAPBackground(true);
       }
     };
   }
@@ -723,6 +758,7 @@
           <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um den Übungstrial zu starten.</b></p>
         </div>`,
       choices: [' '],
+      css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true)
     };
@@ -818,6 +854,7 @@
       type: jsPsychHtmlButtonResponse,
       stimulus: stimulus_html,
       choices: ['Weiter'],
+      css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true)
     };
@@ -843,6 +880,7 @@
         </div>
       `,
       choices: [' '],
+      css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true)
     };
@@ -851,7 +889,6 @@
     return practice_timeline;
   }
 
-  // --- ANGEPASSTE FUNKTION ---
   function makeBlockTrials(highlight, blockLabel, probeArr, blockOrderNumber) {
     const block = [];
     let probeCounter = 0;
@@ -868,16 +905,12 @@
     let currentTargetIdx = 0;
     block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
 
-    // --- ANPASSUNG für garantierte 25% Memory Checks ---
-    // 1. Erstelle eine Liste der Trial-Indizes (0 bis 11)
     const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
-    // 2. Wähle davon zufällig 3 Indizes aus, an denen ein Memory Check stattfinden soll (25% von 12 = 3).
     const numberOfChecks = Math.floor(trialsPerBlock * 0.25);
     const memoryCheckIndices = jsPsych.randomization.sampleWithoutReplacement(allTrialIndices, numberOfChecks);
-    // --- ENDE DER ANPASSUNG ---
 
     for (let i = 0; i < trialsPerBlock; i++) {
-      if (i === 6) {
+      if (i === Math.floor(trialsPerBlock / 2)) {
         currentTargetIdx = 1;
         block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
       }
@@ -898,35 +931,40 @@
         () => probeArr[probeCounter++]
       ));
 
-      // --- ANPASSUNG FÜR MEMORY CHECKS ---
-      // Prüfe, ob der aktuelle Trial-Index (i) einer der 3 Auserwählten ist.
       if (memoryCheckIndices.includes(i)) {
-        // Wenn ja, entscheide zufällig (50/50), welcher der beiden Checks gezeigt wird.
         if (Math.random() < 0.5) {
           block.push(getMemoryCheckTrial(false));
         } else {
           block.push(getConfirmMemoryCheckTrial(false));
         }
       }
-      // --- ENDE DER ANPASSUNG ---
       
       block.push(fixation);
     }
     return block;
   }
 
+  // ########### HIER IST DIE 2. ÄNDERUNG ###########
   const showConfirmButton = (callback, isPractice = false, probeType = null) => {
-    // ... (Diese Funktion bleibt unverändert) ...
     const confirm = document.createElement('div');
     confirm.className = 'confirm-box';
     confirm.textContent = 'Bestätigen';
 
-    const paddingY = window.innerHeight * 0.05;
+    // === START DER ÄNDERUNG INNERHALB DER FUNKTION ===
+    const paddingY = window.innerHeight * 0.05; 
     const paddingX = window.innerWidth * 0.05;
-    const topBoundary = window.innerHeight * 0.10;
+    
+    // Wir definieren eine sichere Mindestdistanz von oben in Pixeln.
+    const minimumTopInPixels = 140; 
+    
+    // Die obere Grenze ist der GRÖSSERE Wert von 140px ODER den bisherigen 10% der Höhe.
+    // Das verhindert, dass der Button auf kurzen Bildschirmen zu hoch rutscht.
+    const topBoundary = Math.max(minimumTopInPixels, window.innerHeight * 0.10);
+    
     const bottomBoundary = window.innerHeight - paddingY;
     const leftBoundary = paddingX;
     const rightBoundary = window.innerWidth - paddingX;
+    // === ENDE DER ÄNDERUNG INNERHALB DER FUNKTION ===
 
     const buttonW = 75;
     const buttonH = 40;
@@ -947,6 +985,7 @@
     let found = false;
 
     while (tries < maxTries) {
+      // Wir verwenden die neu berechneten Grenzen für die Positionierung.
       confirmX = leftBoundary + Math.random() * (rightBoundary - leftBoundary - buttonW);
       confirmY = topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH);
 
