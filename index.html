@@ -8,8 +8,6 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
     <style>
-
-    
     /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
     im JavaScript-Code geben. */
       .jspsych-trial.vertically-centered-content .jspsych-display-element {
@@ -327,7 +325,7 @@
   });
 
   // ==== Blöcke mit 50/50 pro Typ ===
-  const totalTrials = 12;
+  const totalTrials = 4; 
   const trialsPerBlock = totalTrials / 2; 
 
   function generateProbeArray(n) {
@@ -363,10 +361,26 @@
     choices: ['Weiter'],
     css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
-    on_finish: () => showSAPBackground(true)
+    on_finish: () => showSAPBackground(true),
+    // Hinzugefügte block_type-Information
+    data: { trial_stage: 'instruction', block_type: 'Einleitung' }
 };
 
-  function getShowTarget(targetApp, highlight) {
+  // NEUE DEFINITION DES FIXATIONS-TRIALS, UM DAS STARTPROBLEM ZU BEHEBEN
+  function getFixationTrial(blockType = 'unknown') {
+    return {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '<div style="width:100vw;height:100vh;background:white"></div>',
+      choices: [],
+      trial_duration: 1000,
+      response_ends_trial: false, // <--- DIES IST DIE ENTSCHEIDENDE ZEILE FÜR DIE BEHEBUNG DES STARTPROBLEMS!
+      on_load: () => showSAPBackground(true),
+      data: { trial_stage: 'fixation', block_type: blockType }
+    };
+  }
+
+  // Parameter blockType hinzugefügt
+  function getShowTarget(targetApp, highlight, blockType) {
       return {
         type: jsPsychHtmlKeyboardResponse,
         stimulus: () => `
@@ -385,11 +399,14 @@
         choices: [' '],
         css_classes: ['vertically-centered-content'],
         on_load: () => showSAPBackground(false),
-        on_finish: () => showSAPBackground(true)
+        on_finish: () => showSAPBackground(true),
+        // Hinzugefügte block_type-Information
+        data: { trial_stage: 'show_target', target_app_name: targetApp.name, target_app_symbol: targetApp.symbol, block_type: blockType }
       };
     }
 
-    function getInstructions(blockName, highlight) {
+    // Parameter blockType hinzugefügt
+    function getInstructions(blockName, highlight, blockType) {
     const step2_instruction = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe immer <b>mit einem dunkelgrauen Rahmen markiert</b>. Drücken Sie so schnell wie möglich die <b>Leertaste</b>.`
       : `Finden Sie die Ziel-App im Raster und drücken Sie so schnell wie möglich die <b>Leertaste</b>.`;
@@ -414,17 +431,11 @@
       choices: ['Weiter'],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true)
+      on_finish: () => showSAPBackground(true),
+      // Hinzugefügte block_type-Information
+      data: { trial_stage: 'block_instruction', block_name_display: blockName, block_type: blockType }
     };
   }
-
-  const fixation = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: '<div style="width:100vw;height:100vh;background:white"></div>',
-    choices: [],
-    trial_duration: 1000,
-    on_load: () => showSAPBackground(true)
-  };
 
   function renderLayoutRandomGrid(apps, highlightTarget) {
     let positions = [];
@@ -455,7 +466,8 @@
   const layoutRenderers = [renderLayoutRandomGrid];
   const layoutNames = ["RandomGrid4x6"];
 
-  function getSearchTrial(apps, highlightTarget, blockLabel, getProbeType) {
+  // Parameter blockType hinzugefügt
+  function getSearchTrial(apps, highlightTarget, blockLabel, getProbeType, blockType) {
     const randomIndex = Math.floor(Math.random() * layoutRenderers.length);
     const renderer = layoutRenderers[randomIndex];
     const layoutName = layoutNames[randomIndex];
@@ -467,10 +479,17 @@
         return html;
       },
       choices: 'NO_KEYS',
-      data: { block_label: blockLabel },
-      on_load: () => {
+      // Hinzugefügte block_type-Information
+      data: { 
+        trial_stage: 'search_task', 
+        block_type: blockType, 
+        original_block_label: blockLabel,
+        is_target_highlighted: highlightTarget, // Zusätzliche nützliche Info
+        layout: layoutName 
+      }, 
+      on_load: (trial) => {
         showSAPBackground(true);
-        jsPsych.data.addProperties({ layout: layoutName });
+        // jsPsych.data.addProperties({ layout: layoutName }); // Wird jetzt direkt im data-Objekt des Trials gespeichert.
 
         window.currentGridApps = apps.map(x => ({...x}));
         window.gridPositions = [];
@@ -504,7 +523,6 @@
             jsPsych.data.addProperties({ rt_select: rt_select });
 
             const targetRectIdx = apps.findIndex(a => a.isTarget);
-            // KORRIGIERT: 'app_' zu 'app-' geändert, um mit HTML-IDs übereinzustimmen
             let appRect = document.getElementById('app-' + targetRectIdx).getBoundingClientRect(); 
             window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
 
@@ -531,11 +549,18 @@
     };
   }
 
-  function getMemoryCheckTrial(isPracticeTrial = false) {
+  // Parameter blockType hinzugefügt
+  function getMemoryCheckTrial(isPracticeTrial = false, blockType = 'unknown') {
     return {
       type: jsPsychHtmlButtonResponse,
       choices: [],
       response_ends_trial: false,
+      // Hinzugefügte block_type-Information
+      data: { 
+        trial_stage: 'memory_check_app_pos', 
+        block_type: blockType, 
+        is_practice_trial: isPracticeTrial 
+      }, 
       stimulus: () => {
         const containerStyle = window.overrideContainerStyle || '';
         const gridStyle = window.overrideGridStyle || window.gridContainerStyle || '';
@@ -612,15 +637,22 @@
         window.overrideGridStyle = '';
         window.overrideContainerStyle = '';
       }
-    }
+    };
   }
 
-  function getConfirmMemoryCheckTrial(isPracticeTrial = false) {
+  // Parameter blockType hinzugefügt
+  function getConfirmMemoryCheckTrial(isPracticeTrial = false, blockType = 'unknown') {
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: '', 
       choices: [],
       response_ends_trial: false,
+      // Hinzugefügte block_type-Information
+      data: { 
+        trial_stage: 'memory_check_confirm_pos', 
+        block_type: blockType, 
+        is_practice_trial: isPracticeTrial 
+      }, 
       on_load: () => {
         const displayElement = document.querySelector('#jspsych-container .jspsych-display-element');
         if(displayElement) displayElement.innerHTML = '';
@@ -744,7 +776,10 @@
 
 
   // ==== PRACTICE TRIAL ====
-  function createSinglePracticeTrial(highlight, trialNum, totalTrials) {
+  const totalPracticeTrials = 3; // DEINE ORIGINAL KONSTANTE
+
+  // Parameter blockType hinzugefügt
+  function createSinglePracticeTrial(highlight, trialNum, totalTrials, blockType) {
     // Übungstrials sind von der Logik der ausgeschlossenen Apps ausgenommen,
     // sie ziehen ihre Distraktoren aus der vollständigen appNames Liste.
     const distractors = jsPsych.randomization.sampleWithoutReplacement(
@@ -778,7 +813,9 @@
       choices: [' '],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true)
+      on_finish: () => showSAPBackground(true),
+      // Hinzugefügte block_type-Information
+      data: { trial_stage: 'show_target', block_type: blockType, target_app_name: practiceTarget.name, target_app_symbol: practiceTarget.symbol }
     };
     
     const practiceSearchTrial = {
@@ -808,7 +845,8 @@
         return html;
       },
       choices: 'NO_KEYS',
-      data: { block_label: `Übungstrial ${trialNum}` },
+      // Hinzugefügte block_type-Information
+      data: { trial_stage: 'search_task', block_type: blockType, original_block_label: `Übungstrial ${trialNum}` }, 
       on_load: () => {
         showSAPBackground(true);
 
@@ -837,7 +875,6 @@
                 let appRect = targetElement.getBoundingClientRect();
                 window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
             }
-            // Für Übungstrials wird showConfirmButton ohne spezifischen probeType aufgerufen, damit es selbständig einen wählt.
             showConfirmButton(() => jsPsych.finishTrial(), true); 
             document.removeEventListener('keydown', handler, true);
           }
@@ -846,11 +883,12 @@
       }
     };
 
-    return [showPracticeTarget, practiceSearchTrial, getMemoryCheckTrial(true), getConfirmMemoryCheckTrial(true)];
+    // Die Memory-Check Trials erhalten jetzt den blockType 'Übung'
+    return [showPracticeTarget, practiceSearchTrial, getMemoryCheckTrial(true, blockType), getConfirmMemoryCheckTrial(true, blockType)];
   }
 
   function makePracticeBlock(highlight) {
-    const totalPracticeTrials = 3;
+    // totalPracticeTrials ist jetzt eine Konstante außerhalb dieser Funktion
     const step2_instruction = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe <b>mit einem dunkelgrauen Rahmen markiert</b>. Drücken Sie so schnell wie möglich die <b>Leertaste</b>.`
       : `Finden Sie die Ziel-App im Raster und drücken Sie so schnell wie möglich die <b>Leertaste</b>.`;
@@ -865,7 +903,7 @@
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Leertaste</b>.</li>
           <li style="margin-bottom: 15px;">Anschließend werden Sie zu Übungszwecken gebeten, nacheinander sowohl die Position der <b>Ziel-App</b> als auch die Position des <b>"Bestätigen"-Buttons</b> per Mausklick anzugeben.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter", um die Übungsrunde zu starten.</p>
+        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter".</p>
       </div>
     `;
 
@@ -875,17 +913,20 @@
       choices: ['Weiter'],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true)
+      on_finish: () => showSAPBackground(true),
+      // Hinzugefügte block_type-Information
+      data: { trial_stage: 'practice_instruction', block_type: 'Übung' }
     };
 
     const practice_timeline = [practiceInstructions];
 
     for (let i = 0; i < totalPracticeTrials; i++) {
-        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, totalPracticeTrials);
+        // blockType 'Übung' an createSinglePracticeTrial übergeben
+        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, totalPracticeTrials, 'Übung');
         practice_timeline.push(...single_trial_nodes);
         
         if (i < totalPracticeTrials - 1) {
-          practice_timeline.push(fixation);
+          practice_timeline.push(getFixationTrial('Übung')); // HIER getFixationTrial verwendet
         }
     }
 
@@ -901,7 +942,9 @@
       choices: [' '],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true)
+      on_finish: () => showSAPBackground(true),
+      // Hinzugefügte block_type-Information
+      data: { trial_stage: 'practice_end', block_type: 'Übung' }
     };
     practice_timeline.push(endPractice);
 
@@ -911,7 +954,7 @@
   // HIER BEGINNT DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF (AUSSERHALB DER ÜBUNGSTRIALS)
   // Wähle 8 einzigartige App-Namen, die als ZIEL-Apps für das GESAMTE Experiment dienen werden (4 pro Block, 2 Blöcke).
   // Wir benötigen 4 Ziel-Apps pro Block, und da es 2 Blöcke gibt, sind das 8 Apps.
-  const numTargetsPerExperiment = 8; // NEU: Insgesamt 8 Ziel-Apps für das Experiment
+  const numTargetsPerExperiment = 8; 
   const allExperimentTargetNames = jsPsych.randomization.sampleWithoutReplacement(appNames, numTargetsPerExperiment);
 
   // Erstelle einen globalen Pool von App-Namen, die als DISTRAKTOREN verwendet werden können.
@@ -919,24 +962,27 @@
   const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
   // HIER ENDET DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF
 
+  // Parameter blockOrderNumber hinzugefügt (wie in deinem Code) und blockType zum Durchreichen
   function makeBlockTrials(highlight, blockLabel, probeArr, blockOrderNumber) {
     const block = [];
     let probeCounter = 0;
     
     const displayBlockName = `Block ${blockOrderNumber}`;
-    block.push(getInstructions(displayBlockName, highlight));
+    // Hinzugefügte block_type-Information
+    block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
     
-    block.push(...makePracticeBlock(highlight));
+    // makePracticeBlock wird hier wieder aufgerufen, wie in deinem Original-Code
+    block.push(...makePracticeBlock(highlight)); // <--- Dies führt dazu, dass der Übungsblock pro Hauptblock läuft.
 
     // NEU: Bestimme, welche der 8 globalen Ziel-Apps zu DIESEM spezifischen Block gehören.
     // Jeder Block erhält 4 einzigartige Ziel-Apps.
     let targetsForThisBlockNames;
     if (blockOrderNumber === 1) {
         // Die ersten 4 der global ausgewählten Ziel-Apps für Block 1
-        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 4); // NEU: Slice 0 bis 4
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 4); 
     } else { // blockOrderNumber === 2
         // Die nächsten 4 der global ausgewählten Ziel-Apps für Block 2
-        targetsForThisBlockNames = allExperimentTargetNames.slice(4, 8); // NEU: Slice 4 bis 8
+        targetsForThisBlockNames = allExperimentTargetNames.slice(4, 8); 
     }
     
     const blockTargets = targetsForThisBlockNames.map(name => ({ 
@@ -945,40 +991,40 @@
     }));
 
     let currentTargetIdx = 0;
-    // NEU: Zeige die erste Ziel-App zu Beginn des Blocks an
-    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+    // NEU: Zeige die erste Ziel-App zu Beginn des Blocks an (blockLabel als blockType übergeben)
+    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
 
     const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
     
-    // GEÄNDERT: Von 25% auf 30% erhöht
-    const numberOfChecks = Math.floor(trialsPerBlock * 0.30); 
-    
+    const numberOfChecks = Math.floor(trialsPerBlock * 0.25); // DEINE ORIGINAL KONSTANTE
+
     const memoryCheckIndices = jsPsych.randomization.sampleWithoutReplacement(allTrialIndices, numberOfChecks);
 
-    // Erstellt eine vordefinierte, exakt ausbalancierte Liste der Check-Typen.
     const checkTypes = [];
     const numAppChecks = Math.floor(numberOfChecks / 2);
-    const numConfirmChecks = Math.ceil(numberOfChecks / 2); // Math.ceil fängt ungerade Anzahlen ab.
+    const numConfirmChecks = Math.ceil(numberOfChecks / 2); 
 
     for (let j = 0; j < numAppChecks; j++) {
-      checkTypes.push('app_check'); // Ein Typ für den Ziel-App-Check
+      checkTypes.push('app_check'); 
     }
     for (let j = 0; j < numConfirmChecks; j++) {
-      checkTypes.push('confirm_check'); // Ein Typ für den Bestätigen-Button-Check
+      checkTypes.push('confirm_check'); 
     }
     
-    // Mischt die Liste, um eine zufällige Reihenfolge der Check-Typen zu erhalten.
     const shuffledCheckTypes = jsPsych.randomization.shuffle(checkTypes);
 
 
     for (let i = 0; i < trialsPerBlock; i++) {
-      // NEU: Ziel-App wechselt alle 10 Trials (i=10, i=20, i=30)
+      // Ziel-App wechselt alle 10 Trials (i=10, i=20, i=30)
       // Der erste Wechsel findet bei Trial-Index 10 statt (nach 10 Trials)
+      // ACHTUNG: Bei trialsPerBlock = 6 (wie in deinem Code) wird diese Bedingung
+      // (i > 0 && i % 10 === 0) niemals wahr sein, da `i` nur von 0 bis 5 läuft.
+      // Die Ziel-App wird also innerhalb des Blocks nicht wechseln.
       if (i > 0 && i % 10 === 0) { 
-        currentTargetIdx++; // Zur nächsten Ziel-App im blockTargets Array
-        // Sicherstellen, dass wir nicht über die Anzahl der verfügbaren Ziel-Apps hinausgehen
+        currentTargetIdx++; 
         if (currentTargetIdx < blockTargets.length) {
-            block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+            // blockLabel als blockType übergeben
+            block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
         }
       }
       
@@ -990,42 +1036,40 @@
       // ENDE DER ÄNDERUNG
 
       let gridApps = distractors;
-      gridApps.push(currentTarget.name); // Füge die aktuelle Ziel-App hinzu
+      gridApps.push(currentTarget.name); 
       gridApps = jsPsych.randomization.shuffle(gridApps).map(name => ({
         name,
         symbol: name === currentTarget.name ? currentTarget.symbol : symbols[Math.floor(Math.random() * symbols.length)],
         isTarget: name === currentTarget.name
       }));
 
+      // blockLabel als blockType an getSearchTrial übergeben
       block.push(getSearchTrial(
         gridApps,
         highlight,
-        blockLabel,
-        () => probeArr[probeCounter++]
+        blockLabel, // original_block_label
+        () => probeArr[probeCounter++],
+        blockLabel // block_type für die CSV-Spalte
       ));
 
       if (memoryCheckIndices.includes(i)) {
         const checkType = shuffledCheckTypes.pop(); 
 
         if (checkType === 'app_check') {
-          block.push(getMemoryCheckTrial(false));
+          // blockLabel als blockType an getMemoryCheckTrial übergeben
+          block.push(getMemoryCheckTrial(false, blockLabel)); 
         } else { // 'confirm_check'
-          block.push(getConfirmMemoryCheckTrial(false));
+          // blockLabel als blockType an getConfirmMemoryCheckTrial übergeben
+          block.push(getConfirmMemoryCheckTrial(false, blockLabel)); 
         }
       }
       
       // Füge Fixation nur hinzu, wenn es nicht der letzte Trial im Block ist und nicht direkt vor einem Target-Wechsel
-      // um unnötige Fixationen direkt vor der "Show Target" Seite zu vermeiden.
-      // EINE FIXATION WIRD HIER NACH JEDEM SUCH-TRIAL UND NACH JEDEM GEDÄCHTNISTEST HINZUGEFÜGT.
-      // Es ist besser, die Fixation **nach** dem Such-Trial und eventuellem Gedächtnistest, aber **vor** dem nächsten Such-Trial zu platzieren.
-      // Wenn der nächste Trial ein Target-Wechsel ist, dann sollte die Fixation nicht erscheinen.
-      if (i < trialsPerBlock - 1 && (i + 1) % 10 !== 0) { // NEU: Vermeide Fixation vor Target-Wechsel
-         block.push(fixation);
+      // blockLabel als blockType an getFixationTrial übergeben
+      if (i < trialsPerBlock - 1 && (i + 1) % 10 !== 0) { 
+         block.push(getFixationTrial(blockLabel));
       } else if (i < trialsPerBlock - 1 && (i + 1) % 10 === 0) {
-        // Hier könnte man explizit eine Fixation einfügen, wenn der *nächste* Trial ein Target-Wechsel ist.
-        // Aktuell ist die Logik so, dass getShowTarget den Fixations-Effekt "überschreibt".
-        // Da getShowTarget immer direkt nach der Fixation kommt, können wir die Fixation auch hier hinzufügen.
-        block.push(fixation);
+        block.push(getFixationTrial(blockLabel));
       } else if (i === trialsPerBlock -1 ) {
         // Keine Fixation nach dem letzten Trial im Block
       }
@@ -1038,8 +1082,7 @@
   // rect = {x, y, width, height}
   function getRectDistance(rect1, rect2) {
       const r1 = {x1: rect1.x, y1: rect1.y, x2: rect1.x + rect1.width, y2: rect1.y + rect1.height};
-      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height};
-
+      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height}; 
       const dx = Math.max(0, r1.x1 - r2.x2, r2.x1 - r1.x2);
       const dy = Math.max(0, r1.y1 - r2.y2, r2.y1 - r1.y2);
       return Math.sqrt(dx * dx + dy * dy);
@@ -1114,7 +1157,7 @@
           for (let rect of nonTargetRects) {
               const overlap = getOverlapArea(currentConfirmRect, rect);
               // Prüfe, ob mindestens 75% des Buttons die Nicht-Ziel-App überlappen
-              if (overlap / buttonArea >= 0.75) {
+              if (overlap / buttonArea >= 0.75) { 
                   hasSufficientOverlapWithNonTarget = true;
                   break;
               }
@@ -1124,7 +1167,7 @@
           if (targetRect) {
               const overlapTarget = getOverlapArea(currentConfirmRect, targetRect);
               // Prüfe, ob es GAR KEINE Überlappung (oder nur eine vernachlässigbar kleine) mit der Floating-Point-Genauigkeit) mit der Ziel-App gibt
-              if (overlapTarget > 0.001) { // Verwenden eines kleinen Epsilon für Floating-Point-Vergleiche
+              if (overlapTarget > 0.001) { 
                   overlapsTarget = true;
               }
           }
@@ -1139,17 +1182,17 @@
 
           for (let rect of rects) { // Prüfe ALLE Apps
               const overlap = getOverlapArea(currentConfirmRect, rect);
-              if (overlap > 0.001) { // Wenn es EINE beliebige Überlappung (größer als Epsilon) gibt
+              if (overlap > 0.001) { 
                   anyOverlap = true;
                   break;
               }
               const dist = getRectDistance(currentConfirmRect, rect);
-              if (dist < minDistanceFromAppsForOffProbe) { // Prüfe, ob Mindestabstand unterschritten wird
+              if (dist < minDistanceFromAppsForOffProbe) { 
                   tooCloseToApps = true;
                   break;
               }
           }
-          if (!anyOverlap && !tooCloseToApps) { // Gefunden, wenn keine Überlappung UND genügend Abstand
+          if (!anyOverlap && !tooCloseToApps) { 
               found = true;
           }
       }
@@ -1158,23 +1201,20 @@
 
     if (!found) {
       console.warn(`Konnte keine optimale Position für den 'Bestätigen'-Button (${probeType}) nach ${maxTries} Versuchen finden. Platzierung könnte suboptimal sein.`);
-      // Fallback: Der Button wird an der zuletzt generierten confirmX/confirmY Position bleiben.
-      // Dies geschieht, wenn es unmöglich ist, die Bedingungen zu erfüllen.
     }
 
     confirm.style.left = `${confirmX}px`;
     confirm.style.top = `${confirmY}px`;
-    // confirm ist bereits dem body hinzugefügt und nun positioniert
 
     setTimeout(() => {
-      const confirmRect = confirm.getBoundingClientRect(); // Endgültige Position nach Stilsetzung
+      const confirmRect = confirm.getBoundingClientRect(); 
       window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
       window.confirmAppearTime = performance.now();
 
       if (!isPractice) {
         jsPsych.data.addProperties({
           probe_type: probeType,
-          confirm_tries: tries // Zum Debugging, wie viele Versuche es brauchte
+          confirm_tries: tries 
         });
       }
     }, 0);
@@ -1205,6 +1245,10 @@
 
   const randomized_blocks = jsPsych.randomization.shuffle(block_definitions);
 
+  // Der Übungsblock wird hier weiterhin in makeBlockTrials aufgerufen, wie in deinem Originalcode.
+  // Dadurch wird er für JEDEN Hauptblock wiederholt.
+  // const practiceTimeline = makePracticeBlock(false); // <--- Dies ist aus deinem Code entfernt worden, aber die Logik ist jetzt in makeBlockTrials
+
   const firstBlock = makeBlockTrials(
     randomized_blocks[0].highlight,
     randomized_blocks[0].label,
@@ -1219,6 +1263,7 @@
     2 // Dieser Block ist immer "Block 2"
   );
   
+  // Kombiniere alle Teile in der finalen Timeline
   const timeline = [preload, startPage, ...firstBlock, ...secondBlock];
 
   jsPsych.run(timeline);
