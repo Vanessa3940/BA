@@ -309,12 +309,26 @@
   // ==== JSPSYCH INIT ====
   const jsPsych = initJsPsych({
     display_element: 'jspsych-container',
-    on_finish: () => jsPsych.data.displayData()
+    on_finish: function() {
+        // Daten als CSV herunterladen
+        jsPsych.data.get().localSave('csv', 'sap_app_task_data.csv');
+
+        // Optional: Eine "Danke"-Nachricht anzeigen, damit der Teilnehmer weiß, dass das Experiment beendet ist.
+        document.getElementById('jspsych-container').innerHTML = `
+            <div style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 100px;">
+                <h2>Vielen Dank für Ihre Teilnahme!</h2>
+                <p>Ihre Daten wurden automatisch gespeichert.</p>
+                <p>Sie können das Fenstern nun schließen.</p>
+            </div>
+        `;
+        // Stellen Sie sicher, dass der SAP-Hintergrund für die Danke-Nachricht ausgeblendet ist
+        showSAPBackground(false);
+    }
   });
 
   // ==== Blöcke mit 50/50 pro Typ ===
-  const totalTrials = 72;
-  const trialsPerBlock = totalTrials / 2; // 36 Trials pro Block
+  const totalTrials = 12;
+  const trialsPerBlock = totalTrials / 2; 
 
   function generateProbeArray(n) {
     let arr = [];
