@@ -314,7 +314,7 @@
 
   // ==== Blöcke mit 50/50 pro Typ ===
   const totalTrials = 72;
-  const trialsPerBlock = totalTrials / 2;
+  const trialsPerBlock = totalTrials / 2; // 36 Trials pro Block
 
   function generateProbeArray(n) {
     let arr = [];
@@ -892,13 +892,14 @@
     return practice_timeline;
   }
 
-
   // HIER BEGINNT DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF (AUSSERHALB DER ÜBUNGSTRIALS)
-  // Wähle 4 einzigartige App-Namen, die als ZIEL-Apps für das GESAMTE Experiment dienen werden (2 pro Block, 2 Blöcke).
-  const allExperimentTargetNames = jsPsych.randomization.sampleWithoutReplacement(appNames, 4);
+  // Wähle 8 einzigartige App-Namen, die als ZIEL-Apps für das GESAMTE Experiment dienen werden (4 pro Block, 2 Blöcke).
+  // Wir benötigen 4 Ziel-Apps pro Block, und da es 2 Blöcke gibt, sind das 8 Apps.
+  const numTargetsPerExperiment = 8; // NEU: Insgesamt 8 Ziel-Apps für das Experiment
+  const allExperimentTargetNames = jsPsych.randomization.sampleWithoutReplacement(appNames, numTargetsPerExperiment);
 
   // Erstelle einen globalen Pool von App-Namen, die als DISTRAKTOREN verwendet werden können.
-  // Dieser Pool enthält ALLE ursprünglichen App-Namen, AUSSER den 4 oben ausgewählten Ziel-Namen.
+  // Dieser Pool enthält ALLE ursprünglichen App-Namen, AUSSER den 8 oben ausgewählten Ziel-Namen.
   const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
   // HIER ENDET DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF
 
@@ -911,14 +912,15 @@
     
     block.push(...makePracticeBlock(highlight));
 
-    // Bestimme, welche der 4 globalen Ziel-Apps zu DIESEM spezifischen Block gehören
+    // NEU: Bestimme, welche der 8 globalen Ziel-Apps zu DIESEM spezifischen Block gehören.
+    // Jeder Block erhält 4 einzigartige Ziel-Apps.
     let targetsForThisBlockNames;
     if (blockOrderNumber === 1) {
-        // Die ersten 2 der global ausgewählten Ziel-Apps für Block 1
-        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 2); 
+        // Die ersten 4 der global ausgewählten Ziel-Apps für Block 1
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 4); // NEU: Slice 0 bis 4
     } else { // blockOrderNumber === 2
-        // Die nächsten 2 der global ausgewählten Ziel-Apps für Block 2
-        targetsForThisBlockNames = allExperimentTargetNames.slice(2, 4); 
+        // Die nächsten 4 der global ausgewählten Ziel-Apps für Block 2
+        targetsForThisBlockNames = allExperimentTargetNames.slice(4, 8); // NEU: Slice 4 bis 8
     }
     
     const blockTargets = targetsForThisBlockNames.map(name => ({ 
@@ -927,6 +929,7 @@
     }));
 
     let currentTargetIdx = 0;
+    // NEU: Zeige die erste Ziel-App zu Beginn des Blocks an
     block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
 
     const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
@@ -953,14 +956,20 @@
 
 
     for (let i = 0; i < trialsPerBlock; i++) {
-      if (i === Math.floor(trialsPerBlock / 2)) {
-        currentTargetIdx = 1;
-        block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+      // NEU: Ziel-App wechselt alle 10 Trials (i=10, i=20, i=30)
+      // Der erste Wechsel findet bei Trial-Index 10 statt (nach 10 Trials)
+      if (i > 0 && i % 10 === 0) { 
+        currentTargetIdx++; // Zur nächsten Ziel-App im blockTargets Array
+        // Sicherstellen, dass wir nicht über die Anzahl der verfügbaren Ziel-Apps hinausgehen
+        if (currentTargetIdx < blockTargets.length) {
+            block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
+        }
       }
+      
       let currentTarget = blockTargets[currentTargetIdx];
       
       // HIER IST DIE ÄNDERUNG: Distraktoren werden nun aus dem 'globalDistractorPool' gezogen.
-      // Dieser Pool enthält keine der 4 Ziel-Apps des gesamten Experiments.
+      // Dieser Pool enthält keine der 8 Ziel-Apps des gesamten Experiments.
       let distractors = jsPsych.randomization.sampleWithoutReplacement(globalDistractorPool, 14);
       // ENDE DER ÄNDERUNG
 
@@ -989,7 +998,21 @@
         }
       }
       
-      block.push(fixation);
+      // Füge Fixation nur hinzu, wenn es nicht der letzte Trial im Block ist und nicht direkt vor einem Target-Wechsel
+      // um unnötige Fixationen direkt vor der "Show Target" Seite zu vermeiden.
+      // EINE FIXATION WIRD HIER NACH JEDEM SUCH-TRIAL UND NACH JEDEM GEDÄCHTNISTEST HINZUGEFÜGT.
+      // Es ist besser, die Fixation **nach** dem Such-Trial und eventuellem Gedächtnistest, aber **vor** dem nächsten Such-Trial zu platzieren.
+      // Wenn der nächste Trial ein Target-Wechsel ist, dann sollte die Fixation nicht erscheinen.
+      if (i < trialsPerBlock - 1 && (i + 1) % 10 !== 0) { // NEU: Vermeide Fixation vor Target-Wechsel
+         block.push(fixation);
+      } else if (i < trialsPerBlock - 1 && (i + 1) % 10 === 0) {
+        // Hier könnte man explizit eine Fixation einfügen, wenn der *nächste* Trial ein Target-Wechsel ist.
+        // Aktuell ist die Logik so, dass nur die ShowTarget den Fixations-Effekt "überschreibt".
+        // Da getShowTarget immer direkt nach der Fixation kommt, können wir die Fixation auch hier hinzufügen.
+        block.push(fixation);
+      } else if (i === trialsPerBlock -1 ) {
+        // Keine Fixation nach dem letzten Trial im Block
+      }
     }
     return block;
   }
@@ -1134,4 +1157,4 @@
   jsPsych.run(timeline);
 </script>
 </body>
-</html> 
+</html>
