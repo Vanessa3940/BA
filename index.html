@@ -293,11 +293,15 @@
 
   // ==== KONSTANTEN ====
   const appNames = [
-    "Limo7", "LiloM", "PikaX", "Pansi2", "MenoL",
-    "Melo0", "Venni9", "Vuma3", "SuniX", "Samr7",
-    "RafiQ",
-    "RapoM", "Keso2", "KanoL", "KariQ",
-  ];
+      "Limo7", "Loru7", "HivoN", "HoruN", 
+      "PikaX", "PoliX", "Pansi2", "Pexi2", 
+      "MenoL", "MuniL", "Fexa5", "Fumi5",
+      "Venni9", "Vabo9", "Vuma3", "Vezu3",
+      "SuniX", "SokuX", "Samr7", "Seda7",
+      "RafiQ", "RibuQ", "RapoM", "RenuM",
+      "Keso2", "Kipu2", "KanoL", "KuraL", 
+      "KariQ", "KesoQ"
+    ];
   const symbols = [
     '▲\uFE0E',  '■\uFE0E',  '●\uFE0E',  '◆\uFE0E',  '★\uFE0E',  '✚\uFE0E', '☀\uFE0E', '☁\uFE0E', '♞\uFE0E'
   ];
@@ -596,7 +600,6 @@
     }
   }
 
-  // ########### HIER IST DIE 1. ÄNDERUNG ###########
   function getConfirmMemoryCheckTrial(isPracticeTrial = false) {
     return {
       type: jsPsychHtmlButtonResponse,
@@ -634,7 +637,6 @@
             return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
         }
 
-        // === START DER ÄNDERUNG INNERHALB DER FUNKTION ===
         function generateFoilPosition(existing_positions) {
             let foil_pos;
             let tries = 0;
@@ -665,7 +667,6 @@
             // Fallback, falls keine gute Position gefunden wird
             return { x: Math.random() * (window.innerWidth - buttonW), y: topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH) };
         }
-        // === ENDE DER ÄNDERUNG INNERHALB DER FUNKTION ===
 
         const positions_to_check = [correct_pos];
         const foil1 = generateFoilPosition(positions_to_check);
@@ -729,6 +730,8 @@
 
   // ==== PRACTICE TRIAL ====
   function createSinglePracticeTrial(highlight, trialNum, totalTrials) {
+    // Übungstrials sind von der Logik der ausgeschlossenen Apps ausgenommen,
+    // sie ziehen ihre Distraktoren aus der vollständigen appNames Liste.
     const distractors = jsPsych.randomization.sampleWithoutReplacement(
       appNames, 4
     );
@@ -889,6 +892,16 @@
     return practice_timeline;
   }
 
+
+  // HIER BEGINNT DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF (AUSSERHALB DER ÜBUNGSTRIALS)
+  // Wähle 4 einzigartige App-Namen, die als ZIEL-Apps für das GESAMTE Experiment dienen werden (2 pro Block, 2 Blöcke).
+  const allExperimentTargetNames = jsPsych.randomization.sampleWithoutReplacement(appNames, 4);
+
+  // Erstelle einen globalen Pool von App-Namen, die als DISTRAKTOREN verwendet werden können.
+  // Dieser Pool enthält ALLE ursprünglichen App-Namen, AUSSER den 4 oben ausgewählten Ziel-Namen.
+  const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
+  // HIER ENDET DIE ÄNDERUNG FÜR DEN GESAMTEN EXPERIMENTVERLAUF
+
   function makeBlockTrials(highlight, blockLabel, probeArr, blockOrderNumber) {
     const block = [];
     let probeCounter = 0;
@@ -898,16 +911,46 @@
     
     block.push(...makePracticeBlock(highlight));
 
-    const possibleTargets = appNames.slice();
-    const blockTargets = jsPsych.randomization.sampleWithoutReplacement(possibleTargets, 2)
-      .map(name => ({ name: name, symbol: symbols[Math.floor(Math.random() * symbols.length)] }));
+    // Bestimme, welche der 4 globalen Ziel-Apps zu DIESEM spezifischen Block gehören
+    let targetsForThisBlockNames;
+    if (blockOrderNumber === 1) {
+        // Die ersten 2 der global ausgewählten Ziel-Apps für Block 1
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 2); 
+    } else { // blockOrderNumber === 2
+        // Die nächsten 2 der global ausgewählten Ziel-Apps für Block 2
+        targetsForThisBlockNames = allExperimentTargetNames.slice(2, 4); 
+    }
+    
+    const blockTargets = targetsForThisBlockNames.map(name => ({ 
+        name: name, 
+        symbol: symbols[Math.floor(Math.random() * symbols.length)] 
+    }));
 
     let currentTargetIdx = 0;
     block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
 
     const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
-    const numberOfChecks = Math.floor(trialsPerBlock * 0.25);
+    
+    // GEÄNDERT: Von 25% auf 30% erhöht
+    const numberOfChecks = Math.floor(trialsPerBlock * 0.30); 
+    
     const memoryCheckIndices = jsPsych.randomization.sampleWithoutReplacement(allTrialIndices, numberOfChecks);
+
+    // Erstellt eine vordefinierte, exakt ausbalancierte Liste der Check-Typen.
+    const checkTypes = [];
+    const numAppChecks = Math.floor(numberOfChecks / 2);
+    const numConfirmChecks = Math.ceil(numberOfChecks / 2); // Math.ceil fängt ungerade Anzahlen ab.
+
+    for (let j = 0; j < numAppChecks; j++) {
+      checkTypes.push('app_check'); // Ein Typ für den Ziel-App-Check
+    }
+    for (let j = 0; j < numConfirmChecks; j++) {
+      checkTypes.push('confirm_check'); // Ein Typ für den Bestätigen-Button-Check
+    }
+    
+    // Mischt die Liste, um eine zufällige Reihenfolge der Check-Typen zu erhalten.
+    const shuffledCheckTypes = jsPsych.randomization.shuffle(checkTypes);
+
 
     for (let i = 0; i < trialsPerBlock; i++) {
       if (i === Math.floor(trialsPerBlock / 2)) {
@@ -915,9 +958,14 @@
         block.push(getShowTarget(blockTargets[currentTargetIdx], highlight));
       }
       let currentTarget = blockTargets[currentTargetIdx];
-      let distractors = appNames.filter(n => n !== currentTarget.name);
-      let gridApps = jsPsych.randomization.sampleWithoutReplacement(distractors, 14);
-      gridApps.push(currentTarget.name);
+      
+      // HIER IST DIE ÄNDERUNG: Distraktoren werden nun aus dem 'globalDistractorPool' gezogen.
+      // Dieser Pool enthält keine der 4 Ziel-Apps des gesamten Experiments.
+      let distractors = jsPsych.randomization.sampleWithoutReplacement(globalDistractorPool, 14);
+      // ENDE DER ÄNDERUNG
+
+      let gridApps = distractors;
+      gridApps.push(currentTarget.name); // Füge die aktuelle Ziel-App hinzu
       gridApps = jsPsych.randomization.shuffle(gridApps).map(name => ({
         name,
         symbol: name === currentTarget.name ? currentTarget.symbol : symbols[Math.floor(Math.random() * symbols.length)],
@@ -932,9 +980,11 @@
       ));
 
       if (memoryCheckIndices.includes(i)) {
-        if (Math.random() < 0.5) {
+        const checkType = shuffledCheckTypes.pop(); 
+
+        if (checkType === 'app_check') {
           block.push(getMemoryCheckTrial(false));
-        } else {
+        } else { // 'confirm_check'
           block.push(getConfirmMemoryCheckTrial(false));
         }
       }
@@ -944,13 +994,11 @@
     return block;
   }
 
-  // ########### HIER IST DIE 2. ÄNDERUNG ###########
   const showConfirmButton = (callback, isPractice = false, probeType = null) => {
     const confirm = document.createElement('div');
     confirm.className = 'confirm-box';
     confirm.textContent = 'Bestätigen';
 
-    // === START DER ÄNDERUNG INNERHALB DER FUNKTION ===
     const paddingY = window.innerHeight * 0.05; 
     const paddingX = window.innerWidth * 0.05;
     
@@ -964,14 +1012,13 @@
     const bottomBoundary = window.innerHeight - paddingY;
     const leftBoundary = paddingX;
     const rightBoundary = window.innerWidth - paddingX;
-    // === ENDE DER ÄNDERUNG INNERHALB DER FUNKTION ===
 
     const buttonW = 75;
     const buttonH = 40;
 
     function getOverlapArea(ax, ay, aw, ah, bx, by, bw, bh) {
       const x_overlap = Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx));
-      const y_overlap = Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, by));
+      const y_overlap = Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, bx));
       return x_overlap * y_overlap;
     }
 
@@ -1087,5 +1134,4 @@
   jsPsych.run(timeline);
 </script>
 </body>
-</html>
-
+</html> 
