@@ -487,10 +487,11 @@
           if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
             finished = true;
             const rt_select = performance.now() - window.appScreenStart;
-            jsPsych.data.addDataToLastTrial({ rt_select: rt_select });
+            jsPsych.data.addProperties({ rt_select: rt_select });
 
             const targetRectIdx = apps.findIndex(a => a.isTarget);
-            let appRect = document.getElementById('app-' + targetRectIdx).getBoundingClientRect();
+            // KORRIGIERT: 'app_' zu 'app-' geändert, um mit HTML-IDs übereinzustimmen
+            let appRect = document.getElementById('app-' + targetRectIdx).getBoundingClientRect(); 
             window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
 
             const pause = jsPsych.randomization.sampleWithoutReplacement([200, 300, 400, 500], 1)[0];
@@ -577,7 +578,7 @@
               }
             }
             
-            jsPsych.data.addDataToLastTrial({
+            jsPsych.data.addProperties({
               memorycheck_clicked_idx: clickedIdx,
               memorycheck_correct: correct,
               memorycheck_target_idx: window.memoryCheckTargetIdx
@@ -688,7 +689,7 @@
                 elementsToCleanUp.forEach(b => b.style.pointerEvents = 'none');
 
                 const correct = button_data.correct;
-                jsPsych.data.addDataToLastTrial({
+                jsPsych.data.addProperties({
                     confirm_memorycheck_correct: correct,
                     confirm_memorycheck_clicked_x: button_data.pos.x,
                     confirm_memorycheck_clicked_y: button_data.pos.y,
@@ -822,6 +823,7 @@
                 let appRect = targetElement.getBoundingClientRect();
                 window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
             }
+            // Für Übungstrials wird showConfirmButton ohne spezifischen probeType aufgerufen, damit es selbständig einen wählt.
             showConfirmButton(() => jsPsych.finishTrial(), true); 
             document.removeEventListener('keydown', handler, true);
           }
@@ -1007,7 +1009,7 @@
          block.push(fixation);
       } else if (i < trialsPerBlock - 1 && (i + 1) % 10 === 0) {
         // Hier könnte man explizit eine Fixation einfügen, wenn der *nächste* Trial ein Target-Wechsel ist.
-        // Aktuell ist die Logik so, dass nur die ShowTarget den Fixations-Effekt "überschreibt".
+        // Aktuell ist die Logik so, dass getShowTarget den Fixations-Effekt "überschreibt".
         // Da getShowTarget immer direkt nach der Fixation kommt, können wir die Fixation auch hier hinzufügen.
         block.push(fixation);
       } else if (i === trialsPerBlock -1 ) {
@@ -1017,6 +1019,26 @@
     return block;
   }
 
+
+  // NEUE HILFSFUNKTION: Berechnet den Abstand zwischen zwei Rechtecken
+  // rect = {x, y, width, height}
+  function getRectDistance(rect1, rect2) {
+      const r1 = {x1: rect1.x, y1: rect1.y, x2: rect1.x + rect1.width, y2: rect1.y + rect1.height};
+      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height};
+
+      const dx = Math.max(0, r1.x1 - r2.x2, r2.x1 - r1.x2);
+      const dy = Math.max(0, r1.y1 - r2.y2, r2.y1 - r1.y2);
+      return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Helper to get overlap area (rect = {x, y, width, height})
+  function getOverlapArea(rect1, rect2) {
+      const x_overlap = Math.max(0, Math.min(rect1.x + rect1.width, rect2.x + rect2.width) - Math.max(rect1.x, rect2.x));
+      const y_overlap = Math.max(0, Math.min(rect1.y + rect1.height, rect2.y + rect2.height) - Math.max(rect1.y, rect2.y));
+      return x_overlap * y_overlap;
+  }
+
+
   const showConfirmButton = (callback, isPractice = false, probeType = null) => {
     const confirm = document.createElement('div');
     confirm.className = 'confirm-box';
@@ -1025,89 +1047,120 @@
     const paddingY = window.innerHeight * 0.05; 
     const paddingX = window.innerWidth * 0.05;
     
-    // Wir definieren eine sichere Mindestdistanz von oben in Pixeln.
     const minimumTopInPixels = 140; 
-    
-    // Die obere Grenze ist der GRÖSSERE Wert von 140px ODER den bisherigen 10% der Höhe.
-    // Das verhindert, dass der Button auf kurzen Bildschirmen zu hoch rutscht.
     const topBoundary = Math.max(minimumTopInPixels, window.innerHeight * 0.10);
     
     const bottomBoundary = window.innerHeight - paddingY;
     const leftBoundary = paddingX;
     const rightBoundary = window.innerWidth - paddingX;
 
-    const buttonW = 75;
-    const buttonH = 40;
+    // Temporäre Platzierung des Buttons außerhalb des Sichtfelds, um Größe zu messen
+    confirm.style.position = 'absolute';
+    confirm.style.left = '-1000px';
+    confirm.style.top = '-1000px';
+    document.body.appendChild(confirm);
 
-    function getOverlapArea(ax, ay, aw, ah, bx, by, bw, bh) {
-      const x_overlap = Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx));
-      const y_overlap = Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, bx));
-      return x_overlap * y_overlap;
+    const buttonW = confirm.offsetWidth; // Tatsächliche Breite des Buttons
+    const buttonH = confirm.offsetHeight; // Tatsächliche Höhe des Buttons
+    const buttonArea = buttonW * buttonH;
+    
+    // Dynamischer Mindestabstand für OFF-PROBE in Pixeln (z.B. 2vw)
+    const minDistanceFromAppsForOffProbe = window.innerWidth * 0.02; // 2vw
+    
+    // Sicherstellen, dass probeType gesetzt ist. In den Haupt-Trials sollte dies von getSearchTrial kommen.
+    if (!probeType) {
+        // Dieser Fall sollte in den Haupt-Trials nicht eintreten, da probeType von makeBlockTrials kommt.
+        // Für Übungstrials, wo kein spezifischer probeType übergeben wird, kann er zufällig gewählt werden.
+        if (isPractice) {
+            probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
+        } else {
+            console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Dies ist ein Fehler in der Timeline-Generierung.");
+            // Fallback für den unwahrscheinlichen Fehlerfall, sollte aber nie erreicht werden
+            probeType = 'off-probe'; 
+        }
     }
-
-    if (!probeType)
-      probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
 
     let confirmX, confirmY;
     let tries = 0;
-    const maxTries = 1000;
-    const buttonArea = buttonW * buttonH;
+    const maxTries = 1000; 
     let found = false;
 
-    while (tries < maxTries) {
-      // Wir verwenden die neu berechneten Grenzen für die Positionierung.
+    const rects = window.appRects || [];
+    const nonTargetRects = rects.filter(r => !r.isTarget);
+    const targetRect = rects.find(r => r.isTarget);
+
+    while (tries < maxTries && !found) {
       confirmX = leftBoundary + Math.random() * (rightBoundary - leftBoundary - buttonW);
       confirmY = topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH);
 
-      const rects = window.appRects || [];
-      const nonTargetRects = rects.filter(r => !r.isTarget);
+      let currentConfirmRect = { x: confirmX, y: confirmY, width: buttonW, height: buttonH };
 
       if (probeType === 'on-probe') {
-        found = false;
-        for (let rect of nonTargetRects) {
-          const overlap = getOverlapArea(confirmX, confirmY, buttonW, buttonH, rect.x, rect.y, rect.width, rect.height);
-          if (overlap / buttonArea >= 0.5) {
-            const targetRect = rects.find(r => r.isTarget);
-            let overlapTarget = 0;
-            if (targetRect) {
-              overlapTarget = getOverlapArea(confirmX, confirmY, buttonW, buttonH, targetRect.x, targetRect.y, targetRect.width, targetRect.height);
-            }
-            if (!targetRect || (overlapTarget / buttonArea) < 0.5) {
+          let hasSufficientOverlapWithNonTarget = false;
+          for (let rect of nonTargetRects) {
+              const overlap = getOverlapArea(currentConfirmRect, rect);
+              // Prüfe, ob mindestens 75% des Buttons die Nicht-Ziel-App überlappen
+              if (overlap / buttonArea >= 0.75) {
+                  hasSufficientOverlapWithNonTarget = true;
+                  break;
+              }
+          }
+
+          let overlapsTarget = false;
+          if (targetRect) {
+              const overlapTarget = getOverlapArea(currentConfirmRect, targetRect);
+              // Prüfe, ob es GAR KEINE Überlappung (oder nur eine vernachlässigbar kleine) mit der Floating-Point-Genauigkeit) mit der Ziel-App gibt
+              if (overlapTarget > 0.001) { // Verwenden eines kleinen Epsilon für Floating-Point-Vergleiche
+                  overlapsTarget = true;
+              }
+          }
+
+          if (hasSufficientOverlapWithNonTarget && !overlapsTarget) {
               found = true;
-              break;
-            }
           }
-        }
-        if (found) break;
-      } else {
-        let anyOverlap = false;
-        for (let rect of rects) {
-          const overlap = getOverlapArea(confirmX, confirmY, buttonW, buttonH, rect.x, rect.y, rect.width, rect.height);
-          if (overlap > 0) {
-            anyOverlap = true;
-            break;
+
+      } else { // probeType === 'off-probe'
+          let anyOverlap = false;
+          let tooCloseToApps = false;
+
+          for (let rect of rects) { // Prüfe ALLE Apps
+              const overlap = getOverlapArea(currentConfirmRect, rect);
+              if (overlap > 0.001) { // Wenn es EINE beliebige Überlappung (größer als Epsilon) gibt
+                  anyOverlap = true;
+                  break;
+              }
+              const dist = getRectDistance(currentConfirmRect, rect);
+              if (dist < minDistanceFromAppsForOffProbe) { // Prüfe, ob Mindestabstand unterschritten wird
+                  tooCloseToApps = true;
+                  break;
+              }
           }
-        }
-        if (!anyOverlap) {
-          found = true;
-          break;
-        }
+          if (!anyOverlap && !tooCloseToApps) { // Gefunden, wenn keine Überlappung UND genügend Abstand
+              found = true;
+          }
       }
       tries++;
     }
 
+    if (!found) {
+      console.warn(`Konnte keine optimale Position für den 'Bestätigen'-Button (${probeType}) nach ${maxTries} Versuchen finden. Platzierung könnte suboptimal sein.`);
+      // Fallback: Der Button wird an der zuletzt generierten confirmX/confirmY Position bleiben.
+      // Dies geschieht, wenn es unmöglich ist, die Bedingungen zu erfüllen.
+    }
+
     confirm.style.left = `${confirmX}px`;
     confirm.style.top = `${confirmY}px`;
-    document.body.appendChild(confirm);
+    // confirm ist bereits dem body hinzugefügt und nun positioniert
 
     setTimeout(() => {
-      const confirmRect = confirm.getBoundingClientRect();
+      const confirmRect = confirm.getBoundingClientRect(); // Endgültige Position nach Stilsetzung
       window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
       window.confirmAppearTime = performance.now();
 
       if (!isPractice) {
-        jsPsych.data.addDataToLastTrial({
-          probe_type: probeType
+        jsPsych.data.addProperties({
+          probe_type: probeType,
+          confirm_tries: tries // Zum Debugging, wie viele Versuche es brauchte
         });
       }
     }, 0);
@@ -1119,7 +1172,7 @@
         finished = true;
         const rt_confirm = performance.now() - window.confirmAppearTime;
         if (!isPractice) {
-          jsPsych.data.addDataToLastTrial({ rt_confirm });
+          jsPsych.data.addProperties({ rt_confirm });
         }
         confirm.remove();
         document.removeEventListener('keydown', handler, true);
