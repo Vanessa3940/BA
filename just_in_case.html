@@ -309,7 +309,9 @@
     display_element: 'jspsych-container',
     on_finish: function() {
         // Daten als CSV herunterladen
-        jsPsych.data.get().localSave('csv', 'sap_app_task_data.csv');
+        jsPsych.data.get().localSave('csv', 'sap_app_task_data.csv', {
+            exclude_columns: ['timeout', 'failed_images', 'failed_video', 'failed_audio']
+        });
 
         // Optional: Eine "Danke"-Nachricht anzeigen, damit der Teilnehmer weiß, dass das Experiment beendet ist.
         document.getElementById('jspsych-container').innerHTML = `
@@ -325,7 +327,7 @@
   });
 
   // ==== Blöcke mit 50/50 pro Typ ===
-  const totalTrials = 4; 
+  const totalTrials = 8; 
   const trialsPerBlock = totalTrials / 2; 
 
   function generateProbeArray(n) {
@@ -467,10 +469,14 @@
   const layoutNames = ["RandomGrid4x6"];
 
   // Parameter blockType hinzugefügt
-  function getSearchTrial(apps, highlightTarget, blockLabel, getProbeType, blockType) {
+  function getSearchTrial(apps, highlightTarget, blockLabel, getProbeTypeFunction, blockType) {
     const randomIndex = Math.floor(Math.random() * layoutRenderers.length);
     const renderer = layoutRenderers[randomIndex];
     const layoutName = layoutNames[randomIndex];
+    
+    // WICHTIG: getProbeTypeFunction sofort ausführen, um den Probe-Typ für DIESEN Trial zu erhalten
+    const currentTrialProbeType = getProbeTypeFunction(); 
+
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: () => {
@@ -485,7 +491,8 @@
         block_type: blockType, 
         original_block_label: blockLabel,
         is_target_highlighted: highlightTarget, // Zusätzliche nützliche Info
-        layout: layoutName 
+        layout: layoutName,
+        probe_type: currentTrialProbeType // <--- HIER wird der probe_type direkt zum Trial-Data hinzugefügt
       }, 
       on_load: (trial) => {
         showSAPBackground(true);
@@ -520,23 +527,25 @@
           if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
             finished = true;
             const rt_select = performance.now() - window.appScreenStart;
-            jsPsych.data.addProperties({ rt_select: rt_select });
-
+            // jsPsych.data.addProperties({ rt_select: rt_select }); // NICHT MEHR GLOBAL SPEICHERN
+            
             const targetRectIdx = apps.findIndex(a => a.isTarget);
             let appRect = document.getElementById('app-' + targetRectIdx).getBoundingClientRect(); 
             window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
 
             const pause = jsPsych.randomization.sampleWithoutReplacement([200, 300, 400, 500], 1)[0];
-            setTimeout(() => showConfirmButton(() => {
+            // showConfirmButton gibt jetzt Daten zurück, die an jsPsych.finishTrial übergeben werden
+            setTimeout(() => showConfirmButton((confirmData) => { 
               const confirmPosition = window.confirmPosition;
-              jsPsych.data.addProperties({
+              jsPsych.finishTrial({ // Alle Daten für diesen Trial hier zusammenführen
+                rt_select: rt_select, 
                 app1_position_x: window.appPosition.x,
                 app1_position_y: window.appPosition.y,
                 confirm_position_x: confirmPosition.x,
-                confirm_position_y: confirmPosition.y
+                confirm_position_y: confirmPosition.y,
+                ...confirmData // Daten von showConfirmButton hier einfügen
               });
-              jsPsych.finishTrial();
-            }, false, getProbeType()), pause);
+            }, false, currentTrialProbeType), pause); // Hier den bereits bestimmten probe_type übergeben
 
             document.removeEventListener('keydown', handler, true);
           }
@@ -617,14 +626,15 @@
               }
             }
             
-            jsPsych.data.addProperties({
-              memorycheck_clicked_idx: clickedIdx,
-              memorycheck_correct: correct,
-              memorycheck_target_idx: window.memoryCheckTargetIdx
-            });
+            // HIER DIE ÄNDERUNG: Daten direkt an finishTrial übergeben, nicht global addProperties
+            const dataToPass = {
+                memorycheck_clicked_idx: clickedIdx,
+                memorycheck_correct: correct,
+                memorycheck_target_idx: window.memoryCheckTargetIdx
+            };
             
             const trial_duration = isPracticeTrial ? 1500 : 500;
-            setTimeout(() => jsPsych.finishTrial(), trial_duration);
+            setTimeout(() => jsPsych.finishTrial(dataToPass), trial_duration); // Daten hier übergeben
           }, { once: true });
         });
       },
@@ -735,13 +745,14 @@
                 elementsToCleanUp.forEach(b => b.style.pointerEvents = 'none');
 
                 const correct = button_data.correct;
-                jsPsych.data.addProperties({
+                // HIER DIE ÄNDERUNG: Daten direkt an finishTrial übergeben, nicht global addProperties
+                const dataToPass = {
                     confirm_memorycheck_correct: correct,
                     confirm_memorycheck_clicked_x: button_data.pos.x,
                     confirm_memorycheck_clicked_y: button_data.pos.y,
                     confirm_memorycheck_target_x: correct_pos.x,
                     confirm_memorycheck_target_y: correct_pos.y,
-                });
+                };
 
                 if (isPracticeTrial) {
                     if (correct) {
@@ -755,7 +766,7 @@
                 }
 
                 const trial_duration = isPracticeTrial ? 1500 : 500;
-                setTimeout(() => jsPsych.finishTrial(), trial_duration);
+                setTimeout(() => jsPsych.finishTrial(dataToPass), trial_duration); // Daten hier übergeben
 
             }, { once: true });
 
@@ -875,7 +886,8 @@
                 let appRect = targetElement.getBoundingClientRect();
                 window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
             }
-            showConfirmButton(() => jsPsych.finishTrial(), true); 
+            // Für Übungstrials: showConfirmButton gibt jetzt Daten zurück
+            showConfirmButton((confirmData) => jsPsych.finishTrial(confirmData), true); 
             document.removeEventListener('keydown', handler, true);
           }
         };
@@ -972,7 +984,10 @@
     block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
     
     // makePracticeBlock wird hier wieder aufgerufen, wie in deinem Original-Code
-    block.push(...makePracticeBlock(highlight)); // <--- Dies führt dazu, dass der Übungsblock pro Hauptblock läuft.
+    // Hinweis: Dies bedeutet, dass ein Übungsblock VOR JEDEM Hauptblock läuft.
+    // Wenn Sie nur einen Übungsblock am Anfang des gesamten Experiments wünschen,
+    // müssten Sie diesen makePracticeBlock-Aufruf verschieben und nur einmal aufrufen.
+    block.push(...makePracticeBlock(highlight));
 
     // NEU: Bestimme, welche der 8 globalen Ziel-Apps zu DIESEM spezifischen Block gehören.
     // Jeder Block erhält 4 einzigartige Ziel-Apps.
@@ -996,7 +1011,8 @@
 
     const allTrialIndices = Array.from({length: trialsPerBlock}, (_, k) => k);
     
-    const numberOfChecks = Math.floor(trialsPerBlock * 0.25); // DEINE ORIGINAL KONSTANTE
+    // Korrektur: Stellen Sie sicher, dass numberOfChecks mindestens 1 ist, wenn trialsPerBlock > 0
+    const numberOfChecks = Math.max(1, Math.floor(trialsPerBlock * 0.25));
 
     const memoryCheckIndices = jsPsych.randomization.sampleWithoutReplacement(allTrialIndices, numberOfChecks);
 
@@ -1082,7 +1098,7 @@
   // rect = {x, y, width, height}
   function getRectDistance(rect1, rect2) {
       const r1 = {x1: rect1.x, y1: rect1.y, x2: rect1.x + rect1.width, y2: rect1.y + rect1.height};
-      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height}; 
+      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect1.width, y2: rect2.y + rect1.height}; 
       const dx = Math.max(0, r1.x1 - r2.x2, r2.x1 - r1.x2);
       const dy = Math.max(0, r1.y1 - r2.y2, r2.y1 - r1.y2);
       return Math.sqrt(dx * dx + dy * dy);
@@ -1124,29 +1140,25 @@
     // Dynamischer Mindestabstand für OFF-PROBE in Pixeln (z.B. 2vw)
     const minDistanceFromAppsForOffProbe = window.innerWidth * 0.02; // 2vw
     
-    // Sicherstellen, dass probeType gesetzt ist. In den Haupt-Trials sollte dies von getSearchTrial kommen.
-    if (!probeType) {
-        // Dieser Fall sollte in den Haupt-Trials nicht eintreten, da probeType von makeBlockTrials kommt.
-        // Für Übungstrials, wo kein spezifischer probeType übergeben wird, kann er zufällig gewählt werden.
-        if (isPractice) {
-            probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
-        } else {
-            console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Dies ist ein Fehler in der Timeline-Generierung.");
-            // Fallback für den unwahrscheinlichen Fehlerfall, sollte aber nie erreicht werden
-            probeType = 'off-probe'; 
-        }
+    // Sicherstellen, dass probeType gesetzt ist.
+    // In den Haupt-Trials wird `currentTrialProbeType` übergeben, was schon ein String ist.
+    // In den Übungstrials (`isPractice = true`), muss es hier generiert werden.
+    if (isPractice && !probeType) { // Nur für Übungstrials generieren, wenn nicht bereits übergeben
+        probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
+    } else if (!isPractice && !probeType) { // Fehlermeldung für Haupt-Trials, falls probeType fehlt
+        console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Dies ist ein Fehler in der Timeline-Generierung.");
+        probeType = 'off-probe'; // Fallback
     }
 
     let confirmX, confirmY;
     let tries = 0;
-    const maxTries = 1000; 
     let found = false;
 
     const rects = window.appRects || [];
     const nonTargetRects = rects.filter(r => !r.isTarget);
     const targetRect = rects.find(r => r.isTarget);
 
-    while (tries < maxTries && !found) {
+    while (tries < 1000 && !found) { // Max 1000 Versuche
       confirmX = leftBoundary + Math.random() * (rightBoundary - leftBoundary - buttonW);
       confirmY = topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH);
 
@@ -1200,24 +1212,16 @@
     }
 
     if (!found) {
-      console.warn(`Konnte keine optimale Position für den 'Bestätigen'-Button (${probeType}) nach ${maxTries} Versuchen finden. Platzierung könnte suboptimal sein.`);
+      console.warn(`Konnte keine optimale Position für den 'Bestätigen'-Button (${probeType}) nach ${tries} Versuchen finden. Platzierung könnte suboptimal sein.`);
     }
 
     confirm.style.left = `${confirmX}px`;
     confirm.style.top = `${confirmY}px`;
 
-    setTimeout(() => {
-      const confirmRect = confirm.getBoundingClientRect(); 
-      window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
-      window.confirmAppearTime = performance.now();
-
-      if (!isPractice) {
-        jsPsych.data.addProperties({
-          probe_type: probeType,
-          confirm_tries: tries 
-        });
-      }
-    }, 0);
+    // confirmAppearTime kann sofort gesetzt werden
+    const confirmRect = confirm.getBoundingClientRect(); 
+    window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
+    window.confirmAppearTime = performance.now();
 
     let finished = false;
     const handler = (e) => {
@@ -1225,12 +1229,20 @@
       if (!finished && (e.code === 'Space' || e.key === ' ' || e.keyCode === 32)) {
         finished = true;
         const rt_confirm = performance.now() - window.confirmAppearTime;
-        if (!isPractice) {
-          jsPsych.data.addProperties({ rt_confirm });
+        
+        const dataToReturn = { rt_confirm: rt_confirm };
+        // probe_type und confirm_tries werden nur für Haupt-Trials benötigt (oder wenn in Practice explizit gewünscht)
+        if (!isPractice) { 
+            dataToReturn.probe_type = probeType; // Der tatsächliche String 'on-probe' oder 'off-probe'
+            dataToReturn.confirm_tries = tries;
+        } else { // Auch für Übungstrials zurückgeben, falls gewünscht
+            dataToReturn.probe_type = probeType;
+            dataToReturn.confirm_tries = tries;
         }
+
         confirm.remove();
         document.removeEventListener('keydown', handler, true);
-        callback();
+        callback(dataToReturn); // Daten an den Callback zurückgeben
       }
     };
     document.addEventListener('keydown', handler, true);
@@ -1247,7 +1259,12 @@
 
   // Der Übungsblock wird hier weiterhin in makeBlockTrials aufgerufen, wie in deinem Originalcode.
   // Dadurch wird er für JEDEN Hauptblock wiederholt.
-  // const practiceTimeline = makePracticeBlock(false); // <--- Dies ist aus deinem Code entfernt worden, aber die Logik ist jetzt in makeBlockTrials
+  // Wenn der Übungsblock nur einmal am ANFANG des gesamten Experiments laufen soll,
+  // verschieben Sie makePracticeBlock(false) VOR die Schleife, die firstBlock und secondBlock erstellt.
+  // Beispiel:
+  // const timeline = [preload, startPage, ...makePracticeBlock(false)];
+  // timeline.push(...firstBlock, ...secondBlock);
+  // jsPsych.run(timeline);
 
   const firstBlock = makeBlockTrials(
     randomized_blocks[0].highlight,
