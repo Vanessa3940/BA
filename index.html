@@ -327,7 +327,7 @@
   });
 
   // ==== Blöcke mit 50/50 pro Typ ===
-  const totalTrials = 8; 
+  const totalTrials = 16; 
   const trialsPerBlock = totalTrials / 2; 
 
   function generateProbeArray(n) {
@@ -725,56 +725,60 @@
             return { x: Math.random() * (window.innerWidth - buttonW), y: topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH) };
         }
 
-        const positions_to_check = [correct_pos];
-        const foil1 = generateFoilPosition(positions_to_check);
-        positions_to_check.push(foil1);
-        const foil2 = generateFoilPosition(positions_to_check);
+        // === NEUER CODE BEGINNT HIER FÜR DIE VERZÖGERUNG ===
+        // Erstellen Sie die Buttons erst nach einer Verzögerung
+        setTimeout(() => {
+          const positions_to_check = [correct_pos];
+          const foil1 = generateFoilPosition(positions_to_check);
+          positions_to_check.push(foil1);
+          const foil2 = generateFoilPosition(positions_to_check);
 
-        const all_buttons_data = [ { pos: correct_pos, correct: true }, { pos: foil1, correct: false }, { pos: foil2, correct: false } ];
-        const shuffled_buttons = jsPsych.randomization.shuffle(all_buttons_data);
+          const all_buttons_data = [ { pos: correct_pos, correct: true }, { pos: foil1, correct: false }, { pos: foil2, correct: false } ];
+          const shuffled_buttons = jsPsych.randomization.shuffle(all_buttons_data);
 
-        shuffled_buttons.forEach(button_data => {
-            const btn = document.createElement('div');
-            btn.className = 'confirm-box';
-            btn.textContent = 'Bestätigen';
-            btn.style.position = 'absolute';
-            btn.style.left = `${button_data.pos.x}px`;
-            btn.style.top = `${button_data.pos.y}px`;
+          shuffled_buttons.forEach(button_data => {
+              const btn = document.createElement('div');
+              btn.className = 'confirm-box';
+              btn.textContent = 'Bestätigen';
+              btn.style.position = 'absolute';
+              btn.style.left = `${button_data.pos.x}px`;
+              btn.style.top = `${button_data.pos.y}px`;
 
-            btn.addEventListener('click', () => {
-                elementsToCleanUp.forEach(b => b.style.pointerEvents = 'none');
+              btn.addEventListener('click', () => {
+                  elementsToCleanUp.forEach(b => b.style.pointerEvents = 'none');
 
-                const correct = button_data.correct;
-                // HIER DIE ÄNDERUNG: Daten direkt an finishTrial übergeben, nicht global addProperties
-                const dataToPass = {
-                    confirm_memorycheck_correct: correct,
-                    confirm_memorycheck_clicked_x: button_data.pos.x,
-                    confirm_memorycheck_clicked_y: button_data.pos.y,
-                    confirm_memorycheck_target_x: correct_pos.x,
-                    confirm_memorycheck_target_y: correct_pos.y,
-                };
+                  const correct = button_data.correct;
+                  // HIER DIE ÄNDERUNG: Daten direkt an finishTrial übergeben, nicht global addProperties
+                  const dataToPass = {
+                      confirm_memorycheck_correct: correct,
+                      confirm_memorycheck_clicked_x: button_data.pos.x,
+                      confirm_memorycheck_clicked_y: button_data.pos.y,
+                      confirm_memorycheck_target_x: correct_pos.x,
+                      confirm_memorycheck_target_y: correct_pos.y,
+                  };
 
-                if (isPracticeTrial) {
-                    if (correct) {
-                        btn.style.backgroundColor = '#b7e7b4'; btn.style.borderColor = '#107E3e'; btn.style.color = '#107E3e'; btn.innerHTML = '<span style="font-weight: bold;">Richtig!</span>';
-                    } else {
-                        btn.style.backgroundColor = '#ffd1b9'; btn.style.borderColor = '#A91D1D'; btn.style.color = '#A91D1D'; btn.innerHTML = '<span style="font-weight: bold;">Falsch!</span>';
-                    }
-                } else {
-                    btn.style.backgroundColor = '#dcdcdc';
-                    btn.style.borderColor = '#aaaaaa';
-                }
+                  if (isPracticeTrial) {
+                      if (correct) {
+                          btn.style.backgroundColor = '#b7e7b4'; btn.style.borderColor = '#107E3e'; btn.style.color = '#107E3e'; btn.innerHTML = '<span style="font-weight: bold;">Richtig!</span>';
+                      } else {
+                          btn.style.backgroundColor = '#ffd1b9'; btn.style.borderColor = '#A91D1D'; btn.style.color = '#A91D1D'; btn.innerHTML = '<span style="font-weight: bold;">Falsch!</span>';
+                      }
+                  } else {
+                      btn.style.backgroundColor = '#dcdcdc';
+                      btn.style.borderColor = '#aaaaaa';
+                  }
 
-                const trial_duration = isPracticeTrial ? 1500 : 500;
-                setTimeout(() => jsPsych.finishTrial(dataToPass), trial_duration); // Daten hier übergeben
+                  const trial_duration = isPracticeTrial ? 1500 : 500;
+                  setTimeout(() => jsPsych.finishTrial(dataToPass), trial_duration); // Daten hier übergeben
 
-            }, { once: true });
+              }, { once: true });
 
-            document.body.appendChild(btn);
-            elementsToCleanUp.push(btn);
-        });
-
-        window.tempElements = elementsToCleanUp;
+              document.body.appendChild(btn);
+              elementsToCleanUp.push(btn);
+          });
+          window.tempElements = elementsToCleanUp; // Sicherstellen, dass dies immer gesetzt wird
+        }, 300); // 300 ms Verzögerung
+        // === NEUER CODE ENDET HIER FÜR DIE VERZÖGERUNG ===
       },
       on_finish: () => {
         if (window.tempElements) {
@@ -1098,7 +1102,8 @@
   // rect = {x, y, width, height}
   function getRectDistance(rect1, rect2) {
       const r1 = {x1: rect1.x, y1: rect1.y, x2: rect1.x + rect1.width, y2: rect1.y + rect1.height};
-      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect1.width, y2: rect2.y + rect1.height}; 
+      // KORREKTUR: Sicherstellen, dass rect2.width und rect2.height für r2 verwendet werden
+      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height}; 
       const dx = Math.max(0, r1.x1 - r2.x2, r2.x1 - r1.x2);
       const dy = Math.max(0, r1.y1 - r2.y2, r2.y1 - r1.y2);
       return Math.sqrt(dx * dx + dy * dy);
@@ -1259,8 +1264,8 @@
 
   // Der Übungsblock wird hier weiterhin in makeBlockTrials aufgerufen, wie in deinem Originalcode.
   // Dadurch wird er für JEDEN Hauptblock wiederholt.
-  // Wenn der Übungsblock nur einmal am ANFANG des gesamten Experiments laufen soll,
-  // verschieben Sie makePracticeBlock(false) VOR die Schleife, die firstBlock und secondBlock erstellt.
+  // Wenn Sie nur einen Übungsblock am Anfang des gesamten Experiments wünschen,
+  // müssten Sie diesen makePracticeBlock-Aufruf verschieben und nur einmal aufrufen.
   // Beispiel:
   // const timeline = [preload, startPage, ...makePracticeBlock(false)];
   // timeline.push(...firstBlock, ...secondBlock);
