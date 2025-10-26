@@ -35,7 +35,7 @@
         height: 100vh;
         max-width: 100vw;
         max-height: 100vh;
-        overflow: hidden !important; /* Verhindert Scrollen */
+        overflow: hidden !important;
         margin: 0;
         padding: 0;
         font-family: Arial, sans-serif;
@@ -122,92 +122,75 @@
         background: linear-gradient(180deg,#F5F7F8 80%,#EDF0F1 100%);
         z-index: 0;
       }
-      #jspsych-container {
-        position:absolute;
-        top:125px;
-        left:0;
-        width:100vw;
-        height:calc(100vh - 125px);
-        z-index:10;
-      }
-
-      /* === START: Wichtige Layout-Anpassungen hier === */
+      #jspsych-container,
       .app-container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden; /* Sicherstellen, dass nichts scrollt */
+        width: 100vw;
+        height: calc(100vh - 125px);
+        overflow: hidden;
         position: relative;
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        display: flex;
-        flex-direction: column; /* Stapelt Text über Grid */
-        justify-content: space-evenly; /* Gleichmäßige Verteilung des vertikalen Platzes */
-        align-items: center; /* Zentriert horizontal */
       }
 
-      .app-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr); /* 4 Spalten */
-        grid-template-rows: repeat(4, 1fr);    /* 4 Reihen */
-        /* Größe des Grids, um es auf dem Bildschirm zu zentrieren und gut sichtbar zu machen.
-           Verwendet vmin für responsive Skalierung, aber nicht zu aggressiv, um die Box-Größen nicht zu klein zu machen. */
-        width: clamp(300px, 80vmin, 800px);   /* Mindestens 300px, max 80vmin oder 800px (für sehr große Bildschirme) */
-        height: clamp(300px, 80vmin, 800px);  /* Quadratisch zum Breite/Höhe des Grids */
-        gap: 6vmin;          /* Großer Abstand zwischen den Boxen */
-        padding: 1vmin;      /* Leichter innerer Abstand */
-        box-sizing: border-box;
-        justify-items: center; /* Zentriert Apps innerhalb ihrer Grid-Zellen */
-        align-items: center;   /* Zentriert Apps innerhalb ihrer Grid-Zellen */
-      }
+    .app-container {
+      width: 100vw;
+      height: calc(100vh - 125px);
+      overflow: hidden;
+      position: relative;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      .app-box {
-        aspect-ratio: 1 / 1;
-        width: 100%; /* Füllt die zugewiesene Grid-Zelle */
-        height: 100%; /* Füllt die zugewiesene Grid-Zelle */
-        background-color: white;
-        border: 2px solid #ccc;
-        border-radius: 1vw; /* Beibehaltung der dynamischen Rundung */
-        box-shadow: 0.2vw 0.2vw 0.5vw rgba(0,0,0,0.2);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        user-select: none;
-        text-align: center;
-        font-size: 2.2vw; /* Vergrößert, proportional zur Gesamtgröße und Lesbarkeit */
-        transition: border 0.2s;
-        z-index: 10;
-        min-width: 0;
-        min-height: 0;
-        max-width: none; /* Entfernt frühere max-width */
-        max-height: none; /* Entfernt frühere max-height */
-      }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      width: 100%;
+      height: 100%;
+      gap: 2.5vw;
+      padding: 2.5vw;
+      box-sizing: border-box;
+      justify-items: center;
+      align-items: center;
+    }
 
+    .app-box {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 9vw;
+      max-height: 100%;
+      background-color: white;
+      border: 2px solid #ccc;
+      border-radius: 1vw;
+      box-shadow: 0.2vw 0.2vw 0.5vw rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      user-select: none;
+      text-align: center;
+      font-size: 1.6vw;
+      transition: border 0.2s;
+      z-index: 10;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .empty-app {
+      background: #e4e8ec !important;
+      border: 2px solid #bbb;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .app-box.empty-app:hover {
+      background: #cdd8df !important;
+    }
       .symbol {
-        font-size: 2.7vw; /* Vergrößert, proportional zur Gesamtgröße und Lesbarkeit */
+        font-size: 2vw;
         color: #555;
-      }
-
-      .trial-instruction-text { /* Klasse für den Instruktionstext im Trial */
-        font-size: 1.5vw; /* Responsive Schriftgröße */
-        color: #333;
-        text-align: center;
-        margin-bottom: 2vmin; /* Abstand zum Grid */
-        margin-top: 0; /* Ausrichtung mit Flex-Zentrierung */
-        max-width: 80vw; /* Begrenzt die Breite des Textes */
-      }
-      /* === ENDE: Wichtige Layout-Anpassungen hier === */
-
-      .empty-app {
-        background: #e4e8ec !important;
-        border: 2px solid #bbb;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .app-box.empty-app:hover {
-        background: #cdd8df !important;
       }
       .fixation-screen {
         display: flex;
@@ -245,8 +228,7 @@
         .app-box { font-size: 18px; }
         .symbol { font-size: 23px; }
         .confirm-box { font-size: 13px; width: 60px; height: 40px; }
-        .app-grid { gap: 2vw; } /* Auch hier anpassen, wenn das Grid kleiner wird */
-        .trial-instruction-text { font-size: 16px; margin-bottom: 1em; } /* Feste Größe für kleine Bildschirme */
+        .app-grid { gap: 2vw; }
       }
     </style>
 </head>
@@ -285,8 +267,11 @@
   // ==== KONSTANTEN FÜR REAKTIONSTASTEN ====
   const KEY_TARGET_PRESENT = 'j';
   const KEY_TARGET_ABSENT = 'f';
+  // KEY_CONFIRM kann nun entweder 'j' oder 'f' sein, daher entfernen wir die Konstante und prüfen dynamisch
+  // const KEY_CONFIRM = 'j'; 
 
-  const CONFIRM_BUTTON_DELAY_MS = 60; // NEUE KONSTANTE FÜR DIE BESTÄTIGUNGS-VERZÖGERUNG
+  // NEUE KONSTANTE FÜR DIE BESTÄTIGUNGS-VERZÖGERUNG
+  const CONFIRM_BUTTON_DELAY_MS = 60;
 
   // SAP-Hintergrund An/Aus helper
   function showSAPBackground(show = true) {
@@ -412,7 +397,7 @@
   };
 
   const startPage = {
-    type: jsPsychHtmlButtonResponse,
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: `
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
@@ -425,10 +410,10 @@
             <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
         </ul>
         <p>Anschließend erscheint normalerweise ein Feld „Bestätigen“, bei dem Sie mit der Taste <b>${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> so schnell wie möglich reagieren sollen. In einigen Fällen erscheint das "Bestätigen"-Feld jedoch nicht, und der Trial endet direkt nach Ihrer ersten Tastendruck. Bei diesen Trials wird das App-Raster noch für 3 Sekunden angezeigt, um Ihre Aufmerksamkeit zu überprüfen.</p>
-        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf „Weiter“, um zu beginnen.</p>
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um zu beginnen.</p>
       </div>
     `,
-    choices: ['Weiter'],
+    choices: "ALL_KEYS",
     css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true),
@@ -462,9 +447,9 @@
                 ${targetApp.name}<div class="symbol">${targetApp.symbol}</div>
               </div>
             </div>
-            <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um fortzufahren.</b></p>
+            <p style="margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p> <!-- GEÄNDERT: Leertaste erforderlich -->
           </div>`,
-        choices: [' '],
+          choices: [' '], // GEÄNDERT: Nur Leertaste als Eingabe
         css_classes: ['vertically-centered-content'],
         on_load: () => showSAPBackground(false),
         on_finish: () => showSAPBackground(true),
@@ -488,14 +473,14 @@
           <li style="margin-bottom: 15px;">${step2_instruction_absent} Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint an einer zufälligen Stelle. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>. Manchmal wird das "Bestätigen"-Feld jedoch nicht erscheinen. Bei diesen Trials wird das App-Raster noch für 3 Sekunden angezeigt, um Ihre Aufmerksamkeit zu überprüfen.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">Wenn Sie bereit sind, klicken Sie auf "Weiter".</p>
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um fortzufahren.</p>
       </div>
     `;
 
     return {
-      type: jsPsychHtmlButtonResponse,
+      type: jsPsychHtmlKeyboardResponse,
       stimulus: stimulus_html,
-      choices: ['Weiter'],
+      choices: "ALL_KEYS",
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true),
@@ -504,36 +489,37 @@
   }
 
   function renderLayoutRandomGrid(apps, highlightTarget) {
-    // Erzeuge 4x4 Positionen (16 Zellen)
-    let positions = [];
-    for (let row = 1; row <= 4; row++) {
-      for (let col = 1; col <= 4; col++) {
-        positions.push({ row, col });
-      }
+  // Erzeuge 4x4 Positionen
+  let positions = [];
+  for (let row = 1; row <= 4; row++) {
+    for (let col = 1; col <= 4; col++) {
+      positions.push({ row, col });
     }
-    // Mische die Positionen
-    for (let i = positions.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      [positions[i], positions[j]] = [positions[j], positions[i]];
-    }
-    // Benutze nur so viele Positionen wie Apps geliefert wurden (z.B. 8 oder 4)
-    let usedPositions = positions.slice(0, apps.length);
-
-    let html = `<div class="app-grid">`;
-    usedPositions.forEach((pos, idx) => {
-      let app = apps[idx];
-      let targetClass = (highlightTarget && app.isTarget) ? " highlight-target" : "";
-      html += `<div id="app-${idx}" class="app-box${targetClass}" 
-                style="grid-row: ${pos.row}; grid-column: ${pos.col};">
-                ${app.name}<div class="symbol">${app.symbol}</div>
-              </div>`;
-    });
-    html += "</div>";
-    return html;
   }
+  // shuffle positions
+  for (let i = positions.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  // benutze nur so viele Positionen wie Apps geliefert wurden (z.B. 8 oder 4)
+  let usedPositions = positions.slice(0, apps.length);
+
+  // baue HTML; die app-boxen behalten die vorhandenen CSS-Klassen
+  let html = `<div class="app-grid">`;
+  usedPositions.forEach((pos, idx) => {
+    let app = apps[idx];
+    let targetClass = (highlightTarget && app.isTarget) ? " highlight-target" : "";
+    html += `<div id="app-${idx}" class="app-box${targetClass}" 
+              style="grid-row: ${pos.row}; grid-column: ${pos.col};">
+              ${app.name}<div class="symbol">${app.symbol}</div>
+            </div>`;
+  });
+  html += "</div>";
+  return html;
+}
 
   const layoutRenderers = [renderLayoutRandomGrid];
-  const layoutNames = ["RandomGrid4x6"]; // Name bleibt, obwohl Layout jetzt 4x4
+  const layoutNames = ["RandomGrid4x6"];
 
   function getSearchTrial(apps, highlightTarget, blockLabel, probeType, blockType, isTargetPresent) {
     const randomIndex = Math.floor(Math.random() * layoutRenderers.length);
@@ -543,6 +529,8 @@
     const currentTrialProbeType = probeType; 
     const expectedKey = isTargetPresent ? KEY_TARGET_PRESENT : KEY_TARGET_ABSENT;
 
+    let currentKeyListener = null; // Variable, um den Listener zu speichern
+
     return {
       type: jsPsychHtmlButtonResponse,
       stimulus: () => {
@@ -550,12 +538,8 @@
             ? `<b>Drücken Sie die Taste ${KEY_TARGET_PRESENT.toUpperCase()}, sobald Sie die Ziel-App entdeckt haben!</b>`
             : `<b>Drücken Sie die Taste ${KEY_TARGET_ABSENT.toUpperCase()}, sobald Sie festgestellt haben, dass die Ziel-App NICHT vorhanden ist!</b>`;
 
-        // Instruktionstext in den App-Container integriert
-        let html = `
-          <div class="app-container">
-            <div class="trial-instruction-text">${instructionText}</div>
-            ${renderer(apps, highlightTarget)}
-          </div>`;
+        let html = `<div class="app-container">` + renderer(apps, highlightTarget) + `</div>
+        <div style="margin-top:2em; font-size:1.2vw; color:#333;">${instructionText}</div>`;
         return html;
       },
       choices: 'NO_KEYS', 
@@ -594,13 +578,14 @@
           }
         });
 
-        let finished = false;
-        const handler = (e) => {
+        let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
+
+        currentKeyListener = (e) => { // Definition des Listeners
           const pressedKey = e.key.toLowerCase();
           if (pressedKey === KEY_TARGET_PRESENT || pressedKey === KEY_TARGET_ABSENT) { 
             e.preventDefault(); 
-            if (!finished) {
-              finished = true;
+            if (!trialFinished) { // Prüfung des Flags
+              trialFinished = true; // Setzen des Flags
               const rt_select = performance.now() - window.appScreenStart;
               
               const isResponseCorrect = (pressedKey === expectedKey);
@@ -623,6 +608,10 @@
                   app1_position_y: window.appPosition ? window.appPosition.y : null,
               };
 
+              // Listener entfernen, sobald eine gültige Eingabe erfolgt ist
+              document.removeEventListener('keydown', currentKeyListener, true);
+              currentKeyListener = null; // Referenz löschen
+
               if (currentTrialProbeType === 'no-probe') {
                   setTimeout(() => { 
                       jsPsych.finishTrial({
@@ -634,7 +623,7 @@
                           probe_type: currentTrialProbeType,
                           confirm_tries: null       
                       });
-                  }, 3000); 
+                  }, 1500); 
               } else {
                   setTimeout(() => showConfirmButton((confirmData) => { 
                     const confirmPosition = window.confirmPosition; 
@@ -646,146 +635,188 @@
                     });
                   }, false, currentTrialProbeType), CONFIRM_BUTTON_DELAY_MS); 
               }
-              document.removeEventListener('keydown', handler, true); 
             }
           }
         };
-        document.addEventListener('keydown', handler, true);
+        document.addEventListener('keydown', currentKeyListener, true); // Listener hinzufügen
       },
-      on_unload: () => {
-        document.onkeydown = null;
+      on_unload: () => { // Sicherstellen, dass der Listener im Zweifelsfall entfernt wird
+        if (currentKeyListener) {
+            document.removeEventListener('keydown', currentKeyListener, true);
+            currentKeyListener = null;
+        }
       }
     };
   }
 
 
   // ==== PRACTICE TRIAL ====
-  const totalPracticeTrials = 3; 
+  const totalPracticeTrials = 5; // GEÄNDERT: Anzahl der Übungstrials auf 5 erhöht
 
-  function createSinglePracticeTrial(highlight, trialNum, totalTrials, blockType, fixedTargetApp) {
-    // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren)
-    const tempDistractorPool = appNames.filter(name => name !== fixedTargetApp.name);
-    const distractors = jsPsych.randomization.sampleWithoutReplacement(tempDistractorPool, 3); // 3 Distraktoren
-    
-    let practiceApps = distractors.map(name => ({
+  function createSinglePracticeTrial(highlight, trialNum, blockType, fixedTargetApp, isTargetPresentTrial) { // GEÄNDERT: isTargetPresentTrial Parameter hinzugefügt, totalTrials entfernt
+  // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren),
+  // diese werden in einem 4x4 Grid gerendert, d.h. es gibt leere Zellen
+  const isTargetPresent = isTargetPresentTrial; // Bestimmt, ob die Ziel-App vorhanden ist
+  const numAppsInGrid = 4; // Practice trials always use 4 app boxes in a 4x4 grid
+
+  let practiceApps = [];
+  const tempDistractorPool = appNames.filter(name => name !== fixedTargetApp.name);
+  let distractors;
+
+  if (isTargetPresent) {
+    // 1 Target + 3 Distraktoren
+    distractors = jsPsych.randomization.sampleWithoutReplacement(tempDistractorPool, numAppsInGrid - 1); // 3 Distraktoren
+    practiceApps = distractors.map(name => ({
       name: name,
       symbol: symbols[Math.floor(Math.random() * symbols.length)],
       isTarget: false
     }));
-    practiceApps.push({ 
-        name: fixedTargetApp.name,
-        symbol: fixedTargetApp.symbol,
-        isTarget: true
+    practiceApps.push({
+      name: fixedTargetApp.name,
+      symbol: fixedTargetApp.symbol, 
+      isTarget: true
     });
-    practiceApps = jsPsych.randomization.shuffle(practiceApps);
-    
-    const expectedKey = KEY_TARGET_PRESENT; // In Übungstrials ist Target immer vorhanden
-
-    const practiceSearchTrial = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: () => {
-        window.currentGridApps = practiceApps; 
-        window.memoryCheckTargetIdx = practiceApps.findIndex(a => a.isTarget); 
-
-        // Keine speziellen override-styles nötig, da renderLayoutRandomGrid nun 4x4 nutzt
-        // und practiceApps 4 Elemente enthält.
-        let html = `
-          <div class="app-container">
-            <div class="trial-instruction-text"><b>Drücken Sie die Taste ${KEY_TARGET_PRESENT.toUpperCase()}, sobald Sie die Ziel-App entdeckt haben!</b></div>
-            ${renderLayoutRandomGrid(practiceApps, highlight)}
-          </div>`;
-        return html;
-      },
-      choices: 'NO_KEYS',
-      data: { 
-        trial_stage: 'search_task', 
-        block_type: blockType, 
-        original_block_label: `Übungstrial ${trialNum}`,
-        is_target_present: true, 
-        expected_key_search: expectedKey 
-      }, 
-      on_load: () => {
-        showSAPBackground(true);
-
-        window.appRects = [];
-        document.querySelectorAll('.app-box').forEach((box, i) => {
-          const el = box.getBoundingClientRect();
-          window.appRects.push({
-            name: window.currentGridApps[i].name,
-            x: el.left,
-            y: el.top,
-            width: el.width,
-            height: el.height,
-            isTarget: window.currentGridApps[i].isTarget
-          });
-        });
-
-        window.appScreenStart = performance.now();
-
-        let finished = false;
-        const handler = (e) => {
-          const pressedKey = e.key.toLowerCase();
-          if (pressedKey === KEY_TARGET_PRESENT) { 
-            e.preventDefault();
-            if (!finished) {
-              finished = true;
-              const rt_select = performance.now() - window.appScreenStart;
-              
-              const isResponseCorrect = true; 
-
-              const targetElement = document.querySelector(`.app-box[data-idx="${window.memoryCheckTargetIdx}"]`);
-              if (targetElement) {
-                  let appRect = targetElement.getBoundingClientRect();
-                  window.appPosition = { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height };
-              }
-
-              const searchPhaseData = {
-                  rt_select: rt_select,
-                  response_key_search: pressedKey,
-                  is_response_correct_search: isResponseCorrect,
-                  app1_position_x: window.appPosition ? window.appPosition.x : null,
-                  app1_position_y: window.appPosition ? window.appPosition.y : null,
-              };
-
-              // In Übungstrials ist immer on-probe
-              setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, 'on-probe'), CONFIRM_BUTTON_DELAY_MS); 
-              document.removeEventListener('keydown', handler, true);
-            }
-          }
-        };
-        document.addEventListener('keydown', handler, true);
-      }
-    };
-
-    return [
-      getFixationTrial(blockType), 
-      practiceSearchTrial         
-    ];
+  } else {
+    // 4 Distraktoren (kein Target)
+    distractors = jsPsych.randomization.sampleWithoutReplacement(tempDistractorPool, numAppsInGrid);
+    practiceApps = distractors.map(name => ({
+      name: name,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      isTarget: false
+    }));
+    // Kein Target hinzugefügt
   }
+
+  // mische die 4 Apps
+  practiceApps = jsPsych.randomization.shuffle(practiceApps);
+
+  const expectedKey = isTargetPresent ? KEY_TARGET_PRESENT : KEY_TARGET_ABSENT;
+
+  let practiceKeyListener = null; // Variable, um den Listener zu speichern
+
+  const practiceSearchTrial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      // Wir nutzen denselben renderer renderLayoutRandomGrid, der jetzt 4x4 Positionen zur Verfügung hat.
+      // Da wir nur 4 Apps übergeben, erscheinen genau 4 Boxen in zufälligen Zellen des 4x4 Grids.
+      window.currentGridApps = practiceApps;
+      window.memoryCheckTargetIdx = practiceApps.findIndex(a => a.isTarget); // Ist -1, wenn Target nicht vorhanden
+
+      // Keine speziellen override-styles nötig; aber falls du kleineres Übungs-Grid willst, kannst du override-Styles setzen.
+      // Wir geben einfach das Grid zurück, der Renderer platziert die 4 Apps innerhalb des 4x4-Rasters.
+      let instructionText = isTargetPresent
+          ? `<b>Drücken Sie die Taste ${KEY_TARGET_PRESENT.toUpperCase()}, sobald Sie die Ziel-App entdeckt haben!</b>`
+          : `<b>Drücken Sie die Taste ${KEY_TARGET_ABSENT.toUpperCase()}, sobald Sie festgestellt haben, dass die Ziel-App NICHT vorhanden ist!</b>`; // GEÄNDERT: Anleitungstext dynamisch
+
+      let html = `<div class="app-container">` + renderLayoutRandomGrid(practiceApps, highlight) + `</div>`;
+      html += `<div style="margin-top:2em; font-size:1.2vw; color:#333;">${instructionText}</div>`;
+      return html;
+    },
+    choices: 'NO_KEYS',
+    data: {
+      trial_stage: 'search_task',
+      block_type: blockType,
+      original_block_label: `Übungstrial ${trialNum}`,
+      is_target_present: isTargetPresent, // GEÄNDERT: speichert, ob Target vorhanden war
+      expected_key_search: expectedKey // GEÄNDERT: speichert die erwartete Taste
+    },
+    on_load: (trial) => { // 'trial' Parameter hinzugefügt, falls benötigt
+      showSAPBackground(true);
+      // update rectangles usw. (wie zuvor)
+      window.appRects = [];
+      document.querySelectorAll('.app-box').forEach((box, i) => {
+        const el = box.getBoundingClientRect();
+        window.appRects.push({
+          name: window.currentGridApps[i].name,
+          x: el.left,
+          y: el.top,
+          width: el.width,
+          height: el.height,
+          isTarget: window.currentGridApps[i].isTarget
+        });
+      });
+      window.appScreenStart = performance.now();
+
+      let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
+
+      practiceKeyListener = (e) => { // Definition des Listeners
+        const pressedKey = e.key.toLowerCase();
+        // GEÄNDERT: Beide Tasten (j und f) für die Reaktion zulassen
+        if (pressedKey === KEY_TARGET_PRESENT || pressedKey === KEY_TARGET_ABSENT) {
+          e.preventDefault();
+          if (!trialFinished) { // Prüfung des Flags
+            trialFinished = true; // Setzen des Flags
+            const rt_select = performance.now() - window.appScreenStart;
+            
+            let appRect = null;
+            if (isTargetPresent) { // Nur nach Target-Rechteck suchen, wenn Target vorhanden war
+                const targetRectIdx = practiceApps.findIndex(a => a.isTarget);
+                if (targetRectIdx !== -1) {
+                    let targetEl = document.getElementById('app-' + targetRectIdx);
+                    if (targetEl) appRect = targetEl.getBoundingClientRect();
+                }
+            }
+            window.appPosition = appRect ? { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height } : null;
+
+            const isResponseCorrect = (pressedKey === expectedKey); // GEÄNDERT: Korrektheit prüfen
+
+            const searchPhaseData = {
+              rt_select: rt_select,
+              response_key_search: pressedKey,
+              is_response_correct_search: isResponseCorrect, // GEÄNDERT: Korrektheitsflag
+              app1_position_x: window.appPosition ? window.appPosition.x : null,
+              app1_position_y: window.appPosition ? window.appPosition.y : null,
+            };
+
+            // Listener entfernen, sobald eine gültige Eingabe erfolgt ist
+            document.removeEventListener('keydown', practiceKeyListener, true);
+            practiceKeyListener = null; // Referenz löschen
+
+            // in Übungstrials weiterhin on-probe
+            setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, 'on-probe'), CONFIRM_BUTTON_DELAY_MS);
+          }
+        }
+      };
+      document.addEventListener('keydown', practiceKeyListener, true); // Listener hinzufügen
+    },
+    on_unload: () => { // Sicherstellen, dass der Listener im Zweifelsfall entfernt wird
+      if (practiceKeyListener) {
+          document.removeEventListener('keydown', practiceKeyListener, true);
+          practiceKeyListener = null;
+      }
+    }
+  };
+
+  return [
+    // Fixation vor Übungs-Suchtrial behalten
+    getFixationTrial(blockType),
+    practiceSearchTrial
+  ];
+}
 
   function makePracticeBlock(highlight) {
     const step2_instruction = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe <b>mit einem dunkelgrauen Rahmen markiert</b>.`
       : `Finden Sie die Ziel-App im Raster.`;
 
-    const stimulus_html = `
+    const practiceInstructionStimulus = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">Übungsrunde</h2>
         <p>Wir beginnen mit einer kurzen Übungsrunde mit ${totalPracticeTrials} Durchgängen, um den Ablauf kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau wie möglich aus:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
           <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn gezeigt wird.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken, oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass sie nicht vorhanden ist.</li> 
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">In der Übungsrunde ist die Ziel-App immer im Raster vorhanden und das "Bestätigen"-Feld wird immer erscheinen.</p>
-        <p style="text-align: center; margin-top: 10px;">Wenn Sie bereit sind, klicken Sie auf "Weiter".</p>
+        <p style="text-align: center; margin-top: 30px;">In der Übungsrunde wird das "Bestätigen"-Feld immer erscheinen. Die Ziel-App wird abwechselnd vorhanden und nicht vorhanden sein.</p> <!-- GEÄNDERT: Hinweis auf wechselnde Trials -->
+        <p style="margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um die Übung zu beginnen.</p> <!-- GEÄNDERT: Text von "zweiten Block" zu "Übung" geändert -->
       </div>
     `;
 
     const practiceInstructions = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: stimulus_html,
-      choices: ['Weiter'],
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: practiceInstructionStimulus, // GEÄNDERT: Angepasster Stimulus
+      choices: "ALL_KEYS",
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true),
@@ -802,7 +833,9 @@
     practice_timeline.push(getShowTarget(practiceTargetApp, highlight, 'Übung'));
 
     for (let i = 0; i < totalPracticeTrials; i++) {
-        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, totalPracticeTrials, 'Übung', practiceTargetApp);
+        // GEÄNDERT: Abwechselnd Target-Present (i=0, 2, 4) und Target-Absent (i=1, 3) Trials
+        const isTargetPresentTrial = (i % 2 === 0); 
+        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, 'Übung', practiceTargetApp, isTargetPresentTrial); // GEÄNDERT: neuen Parameter übergeben
         practice_timeline.push(...single_trial_nodes);
     }
 
@@ -811,11 +844,11 @@
       stimulus: `
         <div style="font-size: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
           <p>Die Übungsrunde ist beendet.</p>
-          <p>Der **Hauptteil des Experiments** beginnt jetzt (Block 1).</p>
-          <p style="margin-top: 30px;"><b>Drücken Sie die Leertaste, um fortzufahren.</b></p>
+          <p>Der Hauptblock beginnt jetzt.</p>
+          <p style="margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um fortzufahren.</p>
         </div>
       `,
-      choices: [' '],
+      choices: "ALL_KEYS",
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true),
@@ -826,10 +859,10 @@
     return practice_timeline;
   }
 
-  // === GEÄNDERT: numTargetsPerExperiment von 8 auf 12 erhöht ===
   const numTargetsPerExperiment = 12; 
   const allExperimentTargetNames = jsPsych.randomization.sampleWithoutReplacement(appNames, numTargetsPerExperiment);
 
+  // Der globalDistractorPool enthält alle App-Namen, die NIEMALS Ziel-Apps sein werden (weder jetzt noch später)
   const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
 
   function makeBlockTrials(highlight, blockLabel, trialConditionsArr, blockOrderNumber) { 
@@ -838,43 +871,32 @@
     const displayBlockName = `Block ${blockOrderNumber}`;
     block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
     
-    // Die Übungsrunde wird hier NICHT mehr eingebunden.
+    block.push(...makePracticeBlock(highlight));
 
     let targetsForThisBlockNames;
-    const targetsPerBlock = trialsPerBlock / 20; // 120 Trials / 20 Trials pro Wechsel = 6 einzigartige Ziel-Apps pro Block
-
-    // === GEÄNDERT: Jeder Block bekommt 6 einzigartige Ziel-Apps ===
+    // GEÄNDERT: Nun 6 Targets pro Block, um eine volle Rotation (120 Trials / 20 Trials pro Target = 6 Targets) zu ermöglichen
     if (blockOrderNumber === 1) {
-        targetsForThisBlockNames = allExperimentTargetNames.slice(0, targetsPerBlock); // Erste 6 Apps
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 6); // Die ersten 6 der 12 Targets
     } else { 
-        targetsForThisBlockNames = allExperimentTargetNames.slice(targetsPerBlock, targetsPerBlock * 2); // Nächste 6 Apps
+        targetsForThisBlockNames = allExperimentTargetNames.slice(6, 12); // Die nächsten 6 der 12 Targets
     }
-    // === ENDE GEÄNDERT ===
     
-    // === GEÄNDERT: Block-Ziel-Apps mischen, damit die Reihenfolge randomisiert ist ===
-    const blockTargets = jsPsych.randomization.shuffle(
-        targetsForThisBlockNames.map(name => ({ 
-            name: name, 
-            symbol: symbols[Math.floor(Math.random() * symbols.length)] 
-        }))
-    );
-    // === ENDE GEÄNDERT ===
+    const blockTargets = targetsForThisBlockNames.map(name => ({ 
+        name: name, 
+        symbol: symbols[Math.floor(Math.random() * symbols.length)] 
+    }));
 
     let currentTargetIdx = 0;
     block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
 
     for (let i = 0; i < trialsPerBlock; i++) { 
-      // === GEÄNDERT: Wechsel alle 20 Trials und Inkrementierung ohne Modulo (da genug einzigartige Apps) ===
+      // Der Target-App-Wechsel findet alle 20 Trials statt (i = 20, 40, 60, 80, 100)
+      // currentTargetIdx wird inkrementiert und durch Modulo-Operation auf die Länge von blockTargets begrenzt.
+      // Da blockTargets nun 6 Elemente hat und 6 Wechsel (120/20=6) stattfinden, wird jeder der 6 Targets genau einmal verwendet.
       if (i > 0 && i % 20 === 0) { 
-        currentTargetIdx++; 
-        // Sicherheitshalber, falls targetsPerBlock nicht sauber aufgeht oder ein Fehler passiert
-        if (currentTargetIdx >= blockTargets.length) {
-            console.warn("Zuviele Ziel-App-Wechsel im Block, es sollten nur einzigartige Apps verwendet werden.");
-            currentTargetIdx = 0; // Fallback, sollte aber nicht erreicht werden, wenn targetsPerBlock korrekt ist
-        }
+        currentTargetIdx = (currentTargetIdx + 1) % blockTargets.length; 
         block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
       }
-      // === ENDE GEÄNDERT ===
       
       const currentCondition = trialConditionsArr[i]; 
       let currentTarget = blockTargets[currentTargetIdx]; 
@@ -883,12 +905,16 @@
       const numAppsInGrid = 8; 
 
       if (currentCondition.isTargetPresent) {
+          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
+          // Da der globalDistractorPool bereits alle potentiellen Ziel-Apps ausschließt, ist diese Filterung technisch redundant,
+          // macht aber die Absicht explizit: Das aktuelle Ziel wird nicht als Distraktor angezeigt.
           const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
           gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid - 1);
           gridAppsNames.push(currentTarget.name); 
       } else {
+          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
           const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
-          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid);
+          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid); 
       }
 
       let gridApps = jsPsych.randomization.shuffle(gridAppsNames).map(name => ({
@@ -977,7 +1003,10 @@
 
   // probeType sicherstellen
   if (isPractice && !probeType) {
-    probeType = Math.random() < 0.5 ? 'on-probe' : 'off-probe';
+    // For practice, it's always 'on-probe' as per user request to always show confirm.
+    // However, the original code passes 'on-probe' explicitly for practice, so this branch won't be hit if that's consistent.
+    // Keeping it here for safety, though the explicit passing in createSinglePracticeTrial makes it redundant.
+    probeType = 'on-probe'; 
   } else if (!isPractice && !probeType) {
     console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off-probe'.");
     probeType = 'off-probe';
@@ -1056,13 +1085,15 @@
   window.confirmPosition = { x: confirmRect.left, y: confirmRect.top };
   window.confirmAppearTime = performance.now();
 
-  let finished = false;
-  const handler = (e) => {
+  let confirmKeyListener = null; // Variable, um den Listener zu speichern
+  let confirmFinished = false;
+
+  confirmKeyListener = (e) => {
     const pressedKey = e.key.toLowerCase();
     if (pressedKey === KEY_TARGET_PRESENT || pressedKey === KEY_TARGET_ABSENT) {
       e.preventDefault();
-      if (!finished) {
-        finished = true;
+      if (!confirmFinished) {
+        confirmFinished = true;
         const rt_confirm = performance.now() - window.confirmAppearTime;
         const dataToReturn = {
           rt_confirm: rt_confirm,
@@ -1071,12 +1102,13 @@
           confirm_tries: tries
         };
         confirm.remove();
-        document.removeEventListener('keydown', handler, true);
+        document.removeEventListener('keydown', confirmKeyListener, true); // Listener entfernen
+        confirmKeyListener = null; // Referenz löschen
         callback(dataToReturn);
       }
     }
   };
-  document.addEventListener('keydown', handler, true);
+  document.addEventListener('keydown', confirmKeyListener, true); // Listener hinzufügen
 };
 
 
@@ -1102,36 +1134,7 @@
     2 
   );
   
-  // *** NEU: Übergangs-Trial zwischen den Hauptblöcken ***
-  const blockTransition = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `
-          <div style="max-width: 800px; margin: 0 auto; text-align: center; font-size: 20px;">
-              <h2>Erster Block abgeschlossen!</h2>
-              <p>Machen Sie eine kurze Pause, wenn Sie möchten.</p>
-              <p>Wenn Sie bereit sind, klicken Sie auf "Weiter", um den zweiten Block zu beginnen.</p>
-          </div>
-      `,
-      choices: ['Weiter'],
-      css_classes: ['vertically-centered-content'],
-      on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true),
-      data: { trial_stage: 'block_transition' }
-  };
-  // *** ENDE NEU ***
-
-  // *** WICHTIG: Erstelle den globalen Übungsblock einmalig hier ***
-  const globalPracticeBlock = makePracticeBlock(false); // Die Übung soll nicht hervorgehoben sein
-
-  // *** Finaler Aufbau der Timeline ***
-  const timeline = [
-    preload, 
-    startPage, 
-    ...globalPracticeBlock, // Einmaliger Übungsblock
-    ...firstBlock, 
-    blockTransition,       // Übergang zum zweiten Block
-    ...secondBlock
-  ];
+  const timeline = [preload, startPage, ...firstBlock, ...secondBlock];
 
   jsPsych.run(timeline);
 </script>
