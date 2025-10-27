@@ -223,13 +223,130 @@
         border: 4px solid #888 !important;
         box-shadow: 0 0 12px #bbb !important;
       }
+      /* NEUE CSS FÜR FEEDBACK */
+      .correct-feedback-highlight-green {
+        border: 4px solid #4CAF50 !important; /* Grüner Rand */
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.7) !important; /* Grüner Glanz */
+      }
+      .feedback-text-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3vw; 
+        font-weight: bold;
+        padding: 0.5vw 1vw;
+        border-radius: 8px;
+        z-index: 100; /* Sicherstellen, dass es über allem anderen liegt */
+        text-align: center;
+        pointer-events: none; /* Sorgt dafür, dass Klicks durchgehen */
+        min-width: 100px; /* Mindestbreite, damit der Text gut sichtbar ist */
+      }
+      .feedback-text-overlay.correct {
+        color: #4CAF50; /* Grüner Text */
+        background-color: rgba(232, 245, 233, 0.9); /* Leicht grüner, halbtransparenter Hintergrund */
+      }
+      .feedback-text-overlay.incorrect {
+        color: #F44336; /* Roter Text */
+        background-color: rgba(255, 235, 238, 0.9); /* Leicht roter, halbtransparenter Hintergrund */
+      }
       @media (max-width: 704px) {
         .sap-overview { font-size: 26px; }
         .app-box { font-size: 18px; }
         .symbol { font-size: 23px; }
         .confirm-box { font-size: 13px; width: 60px; height: 40px; }
         .app-grid { gap: 2vw; }
+        .feedback-text-overlay { font-size: 26px; } /* Anpassung für mobile Ansicht */
       }
+
+      /* NEUE CSS FÜR PRACTICE-BEREICH UND DENKBLASE */
+      .practice-area {
+        display: flex;
+        justify-content: center; /* Zentriert den gesamten Bereich */
+        align-items: flex-start; /* Oben ausrichten */
+        width: 100%;
+        height: calc(100vh - 125px); /* Maximale Höhe des Experimentbereichs */
+        box-sizing: border-box;
+        padding: 20px; /* Etwas Abstand um den Bereich */
+        overflow: hidden; /* Verhindert internes Scrollen */
+      }
+
+      /* Anpassung des app-container innerhalb des practice-area */
+      .practice-area .app-container {
+        width: 70%; /* Platz für die Denkblase lassen */
+        height: 100%;
+        position: relative; 
+        flex-shrink: 0; /* Verhindert Schrumpfung */
+        margin-right: 2vw; /* Abstand zwischen Grid und Denkblase */
+      }
+
+      .thought-bubble {
+        flex-grow: 1; /* Nimmt den restlichen Platz ein */
+        max-width: 25%; /* Begrenzt die maximale Breite */
+        background-color: #f8f8f8; /* Heller Hintergrund */
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 1.2vw 1.5vw; /* Responsives Padding */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        font-size: 1.1vw; /* Responsive Schriftgröße */
+        line-height: 1.5;
+        color: #333;
+        z-index: 50;
+        box-sizing: border-box;
+        text-align: left;
+        position: relative; /* Für den Pfeil */
+      }
+
+      /* Pfeil, der nach links zum Grid zeigt */
+      .thought-bubble::before {
+        content: "";
+        position: absolute;
+        top: 20%; /* Vertikale Position des Pfeils anpassen */
+        left: -18px; /* Nach links positionieren */
+        border-width: 10px;
+        border-style: solid;
+        border-color: transparent #ddd transparent transparent;
+      }
+      .thought-bubble::after { /* Innerer Pfeil für den Hintergrund */
+        content: "";
+        position: absolute;
+        top: 20%;
+        left: -16px;
+        border-width: 9px;
+        border-style: solid;
+        border-color: transparent #f8f8f8 transparent transparent;
+      }
+
+      /* Media Query für kleinere Bildschirme / Mobilgeräte */
+      @media (max-width: 1024px) { /* Anpassung des Breakpoints für Layoutänderung */
+        .practice-area {
+          flex-direction: column; /* Vertikal stapeln */
+          align-items: center; /* Elemente zentrieren */
+          overflow-y: auto; /* Scrollen für Inhalt erlauben */
+          padding-top: 15px; 
+        }
+        .practice-area .app-container {
+          width: 95%; /* Breiteres App-Grid */
+          height: auto; /* Automatische Höhe */
+          margin-right: 0;
+          margin-bottom: 20px; /* Abstand zwischen Grid und Denkblase */
+        }
+        .thought-bubble {
+          max-width: 95%; /* Breitere Denkblase */
+          font-size: 16px;
+          padding: 15px;
+          margin-bottom: 20px; /* Abstand unter der Denkblase */
+        }
+        .thought-bubble::before, .thought-bubble::after {
+          display: none; /* Pfeil auf kleinen Bildschirmen ausblenden */
+        }
+      }
+
+      /* Standard-Anleitungstext unter dem Grid ausblenden, wenn die Denkblase angezeigt wird */
+      .practice-area .app-container + div[style*="margin-top:2em"] {
+          display: none; 
+      }
+
     </style>
 </head>
 <body>
@@ -272,6 +389,9 @@
 
   // NEUE KONSTANTE FÜR DIE BESTÄTIGUNGS-VERZÖGERUNG
   const CONFIRM_BUTTON_DELAY_MS = 60;
+  // NEUE KONSTANTE FÜR FEEDBACK-DAUER IN ÜBUNGSRUNDEN
+  const FEEDBACK_DURATION_MS = 700; 
+
 
   // SAP-Hintergrund An/Aus helper
   function showSAPBackground(show = true) {
@@ -336,7 +456,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 120; 
+  const trialsPerBlock = 20; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -403,13 +523,18 @@
         <h2>Willkommen zum Experiment</h2>
         <p>Das Experiment wird ungefähr 30 Minuten dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
         <p>Es wird empfohlen, das Experiment an einem Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur durchzuführen.</p>
-        <p>In diesem Experiment sehen Sie Raster mit App-Kacheln. Zu Beginn jedes Blocks wird Ihnen eine Ziel-App gezeigt.</p>
-        <p>Ihre Aufgabe ist es, die Ziel-App im nachfolgenden Raster so schnell wie möglich zu entdecken und zu reagieren:</p>
+        <p>In diesem Experiment sehen Sie Raster mit App-Kacheln. Zu Beginn jedes Blocks wird Ihnen eine Ziel-App gezeigt. Ihre 
+          Aufgabe ist es, die Ziel-App im nachfolgenden Raster so schnell wie möglich zu entdecken und auf sie zu reagieren:</p>
         <ul style="margin: 20px 0 20px 20px; padding-left: 20px;">
             <li>Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
             <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
         </ul>
-        <p>Anschließend erscheint normalerweise ein Feld „Bestätigen“, bei dem Sie mit der Taste <b>${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> so schnell wie möglich reagieren sollen. In einigen Fällen erscheint das "Bestätigen"-Feld jedoch nicht, und der Trial endet direkt nach Ihrer ersten Tastendruck. Bei diesen Trials wird das App-Raster noch für 3 Sekunden angezeigt, um Ihre Aufmerksamkeit zu überprüfen.</p>
+        <p>Anschließend erscheint normalerweise ein Feld „Bestätigen“, bei dem Sie mit der Taste <b>${KEY_TARGET_PRESENT.toUpperCase()} 
+          oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> so schnell wie möglich reagieren sollen. 
+          In einigen Fällen erscheint das "Bestätigen"-Feld jedoch nicht, und der Trial endet direkt nach Ihrem ersten Tastendruck. 
+          Bei diesen Trials wird das App-Raster noch für ca. 1,5s angezeigt, dann geht das nächste Trial automatisch los.
+          Es ist wichtig, dass Sie in dieser Situation nur mit Tastendruck auf die Ziel-App reagieren und bei Nichterscheinen des 
+          Bestätigen-Feldes KEINE Taste drücken.</p>
         <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um zu beginnen.</p>
       </div>
     `,
@@ -510,7 +635,7 @@
     let app = apps[idx];
     let targetClass = (highlightTarget && app.isTarget) ? " highlight-target" : "";
     html += `<div id="app-${idx}" class="app-box${targetClass}" 
-              style="grid-row: ${pos.row}; grid-column: ${pos.col};">
+              style="grid-row: ${pos.row}; grid-column: ${pos.col};" data-app-name="${app.name}">
               ${app.name}<div class="symbol">${app.symbol}</div>
             </div>`;
   });
@@ -623,7 +748,7 @@
                           probe_type: currentTrialProbeType,
                           confirm_tries: null       
                       });
-                  }, 1500); 
+                  }, 1500); // Angepasste Dauer für no-probe Trials, um 1,5s anzuzeigen.
               } else {
                   setTimeout(() => showConfirmButton((confirmData) => { 
                     const confirmPosition = window.confirmPosition; 
@@ -651,9 +776,9 @@
 
 
   // ==== PRACTICE TRIAL ====
-  const totalPracticeTrials = 5; // GEÄNDERT: Anzahl der Übungstrials auf 5 erhöht
+  const totalPracticeTrials = 8; // <--- HIER GEÄNDERT: Anzahl der Übungstrials auf 8 erhöht
 
-  function createSinglePracticeTrial(highlight, trialNum, blockType, fixedTargetApp, isTargetPresentTrial) { // GEÄNDERT: isTargetPresentTrial Parameter hinzugefügt, totalTrials entfernt
+  function createSinglePracticeTrial(highlight, trialNum, blockType, fixedTargetApp, isTargetPresentTrial) { 
   // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren),
   // diese werden in einem 4x4 Grid gerendert, d.h. es gibt leere Zellen
   const isTargetPresent = isTargetPresentTrial; // Bestimmt, ob die Ziel-App vorhanden ist
@@ -695,24 +820,58 @@
   let practiceKeyListener = null; // Variable, um den Listener zu speichern
 
   const practiceSearchTrial = {
-    type: jsPsychHtmlButtonResponse,
+    type: jsPsychHtmlButtonResponse, // <--- Wichtig: Hier weiterhin HtmlButtonResponse verwenden
     stimulus: () => {
       // Wir nutzen denselben renderer renderLayoutRandomGrid, der jetzt 4x4 Positionen zur Verfügung hat.
       // Da wir nur 4 Apps übergeben, erscheinen genau 4 Boxen in zufälligen Zellen des 4x4 Grids.
       window.currentGridApps = practiceApps;
       window.memoryCheckTargetIdx = practiceApps.findIndex(a => a.isTarget); // Ist -1, wenn Target nicht vorhanden
 
-      // Keine speziellen override-styles nötig; aber falls du kleineres Übungs-Grid willst, kannst du override-Styles setzen.
-      // Wir geben einfach das Grid zurück, der Renderer platziert die 4 Apps innerhalb des 4x4-Rasters.
-      let instructionText = isTargetPresent
+      // Standard-Anleitungstext, der normal unter dem Grid angezeigt würde (wird ausgeblendet)
+      let instructionTextBelowGrid = isTargetPresent
           ? `<b>Drücken Sie die Taste ${KEY_TARGET_PRESENT.toUpperCase()}, sobald Sie die Ziel-App entdeckt haben!</b>`
-          : `<b>Drücken Sie die Taste ${KEY_TARGET_ABSENT.toUpperCase()}, sobald Sie festgestellt haben, dass die Ziel-App NICHT vorhanden ist!</b>`; // GEÄNDERT: Anleitungstext dynamisch
+          : `<b>Drücken Sie die Taste ${KEY_TARGET_ABSENT.toUpperCase()}, sobald Sie festgestellt haben, dass die Ziel-App NICHT vorhanden ist!</b>`; 
 
-      let html = `<div class="app-container">` + renderLayoutRandomGrid(practiceApps, highlight) + `</div>`;
-      html += `<div style="margin-top:2em; font-size:1.2vw; color:#333;">${instructionText}</div>`;
-      return html;
+      let thoughtBubbleHTML = '';
+      // --- GEÄNDERTE LOGIK FÜR DIE DENKBLASE, GILT FÜR ALLE PRACTICE TRIALS ---
+      // Diese Denkblase soll nur in den Übungstrials erscheinen
+      // Der Blocktype 'Übung' wird von makePracticeBlock übergeben, sollte hier also immer true sein.
+      // Die Logik für die Denkblase wird für jeden der 8 Übungstrials ausgeführt.
+      if (blockType === 'Übung') { 
+        const keyPresentText = `<span style="font-weight: bold; color: #186FDB;">${KEY_TARGET_PRESENT.toUpperCase()}</span>`;
+        const keyAbsentText = `<span style="font-weight: bold; color: #186FDB;">${KEY_TARGET_ABSENT.toUpperCase()}</span>`;
+        
+        let presenceText = isTargetPresent 
+          ? `<b>vorhanden</b>` 
+          : `<b>NICHT vorhanden</b>`;
+        
+        let actionText = isTargetPresent 
+          ? `du die Ziel-App siehst. Drücke die Taste ${keyPresentText}.` 
+          : `du festgestellt hast, dass die Ziel-App nicht im Raster ist. Drücke die Taste ${keyAbsentText}.`;
+
+        thoughtBubbleHTML = `
+          <div class="thought-bubble">
+            <p><b>Achtung!</b> In diesem Trial ist die Ziel-App ${presenceText}.</p>
+            <p>Reagiere, sobald ${actionText} Danach erscheint der "Bestätigen"-Button, auf den du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>
+            <p>Konzentriere dich auf schnelle und korrekte Reaktionen!</p>
+          </div>
+        `;
+      }
+      // --- ENDE NEUE LOGIK ---
+
+      // Umhülle app-container und Denkblase in practice-area
+      // Der instructionTextBelowGrid wird nur angezeigt, wenn keine Denkblase vorhanden ist
+      return `
+        <div class="practice-area">
+          <div class="app-container">
+            ${renderLayoutRandomGrid(practiceApps, highlight)}
+          </div>
+          ${thoughtBubbleHTML}
+        </div>
+        <div style="margin-top:2em; font-size:1.2vw; color:#333; display: none;"></div>
+      `;
     },
-    choices: 'NO_KEYS',
+    choices: 'NO_KEYS', // <--- Wichtig: Hier weiterhin 'NO_KEYS' verwenden, da der Listener manuell hinzugefügt wird
     data: {
       trial_stage: 'search_task',
       block_type: blockType,
@@ -720,7 +879,7 @@
       is_target_present: isTargetPresent, // GEÄNDERT: speichert, ob Target vorhanden war
       expected_key_search: expectedKey // GEÄNDERT: speichert die erwartete Taste
     },
-    on_load: (trial) => { // 'trial' Parameter hinzugefügt, falls benötigt
+    on_load: (trial) => { 
       showSAPBackground(true);
       // update rectangles usw. (wie zuvor)
       window.appRects = [];
@@ -741,7 +900,7 @@
 
       practiceKeyListener = (e) => { // Definition des Listeners
         const pressedKey = e.key.toLowerCase();
-        // GEÄNDERT: Beide Tasten (j und f) für die Reaktion zulassen
+        // Beide Tasten (j und f) für die Reaktion zulassen
         if (pressedKey === KEY_TARGET_PRESENT || pressedKey === KEY_TARGET_ABSENT) {
           e.preventDefault();
           if (!trialFinished) { // Prüfung des Flags
@@ -749,21 +908,22 @@
             const rt_select = performance.now() - window.appScreenStart;
             
             let appRect = null;
+            let targetAppElement = null; // Element der Ziel-App, falls vorhanden und hervorgehoben werden soll
             if (isTargetPresent) { // Nur nach Target-Rechteck suchen, wenn Target vorhanden war
-                const targetRectIdx = practiceApps.findIndex(a => a.isTarget);
-                if (targetRectIdx !== -1) {
-                    let targetEl = document.getElementById('app-' + targetRectIdx);
-                    if (targetEl) appRect = targetEl.getBoundingClientRect();
+                const targetIdx = practiceApps.findIndex(a => a.isTarget);
+                if (targetIdx !== -1) {
+                    targetAppElement = document.getElementById('app-' + targetIdx); // Speichere das Element
+                    if (targetAppElement) appRect = targetAppElement.getBoundingClientRect();
                 }
             }
             window.appPosition = appRect ? { x: appRect.left, y: appRect.top, width: appRect.width, height: appRect.height } : null;
 
-            const isResponseCorrect = (pressedKey === expectedKey); // GEÄNDERT: Korrektheit prüfen
+            const isResponseCorrect = (pressedKey === expectedKey); // Korrektheit prüfen
 
             const searchPhaseData = {
               rt_select: rt_select,
               response_key_search: pressedKey,
-              is_response_correct_search: isResponseCorrect, // GEÄNDERT: Korrektheitsflag
+              is_response_correct_search: isResponseCorrect, // Korrektheitsflag
               app1_position_x: window.appPosition ? window.appPosition.x : null,
               app1_position_y: window.appPosition ? window.appPosition.y : null,
             };
@@ -772,8 +932,36 @@
             document.removeEventListener('keydown', practiceKeyListener, true);
             practiceKeyListener = null; // Referenz löschen
 
-            // in Übungstrials weiterhin on-probe
-            setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, 'on-probe'), CONFIRM_BUTTON_DELAY_MS);
+            // --- Feedback-Logik für Übungstrial ---
+            // In Übungstrials ist es immer 'on-probe' und es gibt immer Feedback
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'feedback-text-overlay';
+            
+            if (isResponseCorrect) {
+                feedbackDiv.textContent = 'Richtig';
+                feedbackDiv.classList.add('correct'); // Grüne Farbe für richtig
+                
+                // Highlight für Target-Present bei korrekter Antwort
+                if (isTargetPresent && targetAppElement) { // Nur highlighten, wenn Target da ist UND Element gefunden wurde
+                   targetAppElement.classList.add('correct-feedback-highlight-green');
+                }
+                // Für Target-Absent: Keine spezielle App zum Highlighten, nur Text-Feedback
+            } else {
+                feedbackDiv.textContent = 'Falsch';
+                feedbackDiv.classList.add('incorrect'); // Rote Farbe für falsch
+            }
+            
+            document.body.appendChild(feedbackDiv);
+
+            setTimeout(() => {
+                feedbackDiv.remove(); // Feedback-Text entfernen
+                if (targetAppElement) { // Highlight von Target-App entfernen
+                    targetAppElement.classList.remove('correct-feedback-highlight-green');
+                }
+                // Dann mit dem nächsten Schritt fortfahren (Bestätigen-Button)
+                setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, 'on-probe'), CONFIRM_BUTTON_DELAY_MS);
+            }, FEEDBACK_DURATION_MS);
+            // --- ENDE FEEDBACK LOGIK ---
           }
         }
       };
@@ -808,8 +996,8 @@
           <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken, oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass sie nicht vorhanden ist.</li> 
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">In der Übungsrunde wird das "Bestätigen"-Feld immer erscheinen. Die Ziel-App wird abwechselnd vorhanden und nicht vorhanden sein.</p> <!-- GEÄNDERT: Hinweis auf wechselnde Trials -->
-        <p style="margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um die Übung zu beginnen.</p> <!-- GEÄNDERT: Text von "zweiten Block" zu "Übung" geändert -->
+        <p style="text-align: center; margin-top: 30px;">In der Übungsrunde wird das "Bestätigen"-Feld immer erscheinen. Die Ziel-App wird abwechselnd vorhanden und nicht vorhanden sein. Bei korrekter Antwort erhalten Sie ein kurzes Feedback.</p> <!-- GEÄNDERT: Hinweis auf Feedback -->
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um die Übung zu beginnen.</p> <!-- GEÄNDERT: Text von "zweiten Block" zu "Übung" geändert -->
       </div>
     `;
 
@@ -833,9 +1021,9 @@
     practice_timeline.push(getShowTarget(practiceTargetApp, highlight, 'Übung'));
 
     for (let i = 0; i < totalPracticeTrials; i++) {
-        // GEÄNDERT: Abwechselnd Target-Present (i=0, 2, 4) und Target-Absent (i=1, 3) Trials
+        // Abwechselnd Target-Present (i=0, 2, 4, 6) und Target-Absent (i=1, 3, 5, 7) Trials
         const isTargetPresentTrial = (i % 2 === 0); 
-        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, 'Übung', practiceTargetApp, isTargetPresentTrial); // GEÄNDERT: neuen Parameter übergeben
+        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, 'Übung', practiceTargetApp, isTargetPresentTrial);
         practice_timeline.push(...single_trial_nodes);
     }
 
@@ -941,7 +1129,7 @@
 
   function getRectDistance(rect1, rect2) {
       const r1 = {x1: rect1.x, y1: rect1.y, x2: rect1.x + rect1.width, y2: rect1.y + rect1.height};
-      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect2.height}; 
+      const r2 = {x1: rect2.x, y1: rect2.y, x2: rect2.x + rect2.width, y2: rect2.y + rect1.height}; 
       const dx = Math.max(0, r1.x1 - r2.x2, r2.x1 - r1.x2);
       const dy = Math.max(0, r1.y1 - r2.y2, r2.y1 - r1.y2);
       return Math.sqrt(dx * dx + dy * dy);
