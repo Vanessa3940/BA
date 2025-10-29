@@ -250,6 +250,16 @@
         color: #F44336; /* Roter Text */
         background-color: rgba(255, 235, 238, 0.9); /* Leicht roter, halbtransparenter Hintergrund */
       }
+      /* NEUE CSS FÜR DENKBLASEN-HIGHLIGHT */
+      .thought-bubble.highlight-red {
+          border: 4px solid #F44336 !important; /* Roter Rand, 4px für mehr Sichtbarkeit */
+          box-shadow: 0 0 15px rgba(244, 67, 54, 0.7) !important; /* Roter Glanz */
+      }
+      .thought-bubble.highlight-red::before {
+          border-color: transparent #F44336 transparent transparent; /* Roten Pfeilrand anpassen */
+      }
+      /* Der innere Pfeil muss nicht angepasst werden, da er den Hintergrund der Blase hat */
+
       @media (max-width: 704px) {
         .sap-overview { font-size: 26px; }
         .app-box { font-size: 18px; }
@@ -295,6 +305,7 @@
         box-sizing: border-box;
         text-align: left;
         position: relative; /* Für den Pfeil */
+        transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Übergang für Glühen */
       }
 
       /* Pfeil, der nach links zum Grid zeigt */
@@ -391,6 +402,8 @@
   const CONFIRM_BUTTON_DELAY_MS = 60;
   // NEUE KONSTANTE FÜR FEEDBACK-DAUER IN ÜBUNGSRUNDEN
   const FEEDBACK_DURATION_MS = 700; 
+  // NEUE KONSTANTE FÜR LÄNGERES FEEDBACK BEI FEHLERN IM NO-PROBE TRIAL DER ÜBUNG
+  const NO_PROBE_ERROR_FEEDBACK_DURATION_MS = 2000;
 
 
   // SAP-Hintergrund An/Aus helper
@@ -535,10 +548,10 @@
           Bei diesen Trials wird das App-Raster noch für ca. 1,5s angezeigt, dann geht das nächste Trial automatisch los.
           Es ist wichtig, dass Sie in dieser Situation nur mit Tastendruck auf die Ziel-App reagieren und bei Nichterscheinen des 
           Bestätigen-Feldes KEINE Taste drücken.</p>
-        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um zu beginnen.</p>
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um zu beginnen.</p>
       </div>
     `,
-    choices: "ALL_KEYS",
+    choices: [' '],
     css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true),
@@ -572,7 +585,7 @@
                 ${targetApp.name}<div class="symbol">${targetApp.symbol}</div>
               </div>
             </div>
-            <p style="margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p> <!-- GEÄNDERT: Leertaste erforderlich -->
+            <p style="margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p> <!-- GEÄNDERT: Nur Leertaste als Eingabe -->
           </div>`,
           choices: [' '], // GEÄNDERT: Nur Leertaste als Eingabe
         css_classes: ['vertically-centered-content'],
@@ -598,14 +611,14 @@
           <li style="margin-bottom: 15px;">${step2_instruction_absent} Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
           <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint an einer zufälligen Stelle. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>. Manchmal wird das "Bestätigen"-Feld jedoch nicht erscheinen. Bei diesen Trials wird das App-Raster noch für 3 Sekunden angezeigt, um Ihre Aufmerksamkeit zu überprüfen.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um fortzufahren.</p>
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p>
       </div>
     `;
 
     return {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: stimulus_html,
-      choices: "ALL_KEYS",
+      choices: [' '],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true),
@@ -776,12 +789,25 @@
 
 
   // ==== PRACTICE TRIAL ====
-  const totalPracticeTrials = 8; // <--- HIER GEÄNDERT: Anzahl der Übungstrials auf 8 erhöht
+  // Definiere die Konfigurationen für die Übungstrials
+  const practiceTrialConfigurations = [
+      { isTargetPresent: true, probeType: 'on-probe' },
+      { isTargetPresent: false, probeType: 'on-probe' },
+      { isTargetPresent: true, probeType: 'off-probe' },
+      { isTargetPresent: false, probeType: 'off-probe' },
+      { isTargetPresent: true, probeType: 'no-probe' },
+      { isTargetPresent: false, probeType: 'no-probe' },
+      // Optional: Wiederhole einige Typen für zusätzliche Übung
+      { isTargetPresent: true, probeType: 'on-probe' }, 
+      { isTargetPresent: false, probeType: 'off-probe' } 
+  ];
+  const totalPracticeTrials = practiceTrialConfigurations.length; 
 
-  function createSinglePracticeTrial(highlight, trialNum, blockType, fixedTargetApp, isTargetPresentTrial) { 
+  function createSinglePracticeTrial(highlight, trialNum, blockType, fixedTargetApp, practiceConfig) { 
   // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren),
   // diese werden in einem 4x4 Grid gerendert, d.h. es gibt leere Zellen
-  const isTargetPresent = isTargetPresentTrial; // Bestimmt, ob die Ziel-App vorhanden ist
+  const isTargetPresent = practiceConfig.isTargetPresent; // Bestimmt, ob die Ziel-App vorhanden ist
+  const probeType = practiceConfig.probeType; // Bestimmt den Probe-Typ für diesen Übungstrial
   const numAppsInGrid = 4; // Practice trials always use 4 app boxes in a 4x4 grid
 
   let practiceApps = [];
@@ -827,16 +853,7 @@
       window.currentGridApps = practiceApps;
       window.memoryCheckTargetIdx = practiceApps.findIndex(a => a.isTarget); // Ist -1, wenn Target nicht vorhanden
 
-      // Standard-Anleitungstext, der normal unter dem Grid angezeigt würde (wird ausgeblendet)
-      let instructionTextBelowGrid = isTargetPresent
-          ? `<b>Drücken Sie die Taste ${KEY_TARGET_PRESENT.toUpperCase()}, sobald Sie die Ziel-App entdeckt haben!</b>`
-          : `<b>Drücken Sie die Taste ${KEY_TARGET_ABSENT.toUpperCase()}, sobald Sie festgestellt haben, dass die Ziel-App NICHT vorhanden ist!</b>`; 
-
       let thoughtBubbleHTML = '';
-      // --- GEÄNDERTE LOGIK FÜR DIE DENKBLASE, GILT FÜR ALLE PRACTICE TRIALS ---
-      // Diese Denkblase soll nur in den Übungstrials erscheinen
-      // Der Blocktype 'Übung' wird von makePracticeBlock übergeben, sollte hier also immer true sein.
-      // Die Logik für die Denkblase wird für jeden der 8 Übungstrials ausgeführt.
       if (blockType === 'Übung') { 
         const keyPresentText = `<span style="font-weight: bold; color: #186FDB;">${KEY_TARGET_PRESENT.toUpperCase()}</span>`;
         const keyAbsentText = `<span style="font-weight: bold; color: #186FDB;">${KEY_TARGET_ABSENT.toUpperCase()}</span>`;
@@ -849,18 +866,23 @@
           ? `du die Ziel-App siehst. Drücke die Taste ${keyPresentText}.` 
           : `du festgestellt hast, dass die Ziel-App nicht im Raster ist. Drücke die Taste ${keyAbsentText}.`;
 
+        let confirmInstruction;
+        if (probeType === 'no-probe') {
+            confirmInstruction = `<p><b>Wichtig:</b> In diesem Trial wird <b>kein</b> "Bestätigen"-Feld erscheinen. Der Trial endet automatisch nach deiner ersten Reaktion. Merke dir: danach KEINE Taste drücken, das Raster bleibt noch 1.5s sichtbar!</p>`;
+        } else {
+            confirmInstruction = `<p>Danach erscheint das "Bestätigen"-Feld, auf das du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>`;
+        }
+
         thoughtBubbleHTML = `
           <div class="thought-bubble">
             <p><b>Achtung!</b> In diesem Trial ist die Ziel-App ${presenceText}.</p>
-            <p>Reagiere, sobald ${actionText} Danach erscheint der "Bestätigen"-Button, auf den du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>
+            <p>Reagiere, sobald ${actionText}</p>
+            ${confirmInstruction}
             <p>Konzentriere dich auf schnelle und korrekte Reaktionen!</p>
           </div>
         `;
       }
-      // --- ENDE NEUE LOGIK ---
 
-      // Umhülle app-container und Denkblase in practice-area
-      // Der instructionTextBelowGrid wird nur angezeigt, wenn keine Denkblase vorhanden ist
       return `
         <div class="practice-area">
           <div class="app-container">
@@ -875,9 +897,10 @@
     data: {
       trial_stage: 'search_task',
       block_type: blockType,
-      original_block_label: `Übungstrial ${trialNum}`,
-      is_target_present: isTargetPresent, // GEÄNDERT: speichert, ob Target vorhanden war
-      expected_key_search: expectedKey // GEÄNDERT: speichert die erwartete Taste
+      original_block_label: `Übungstrial ${trialNum} (${probeType})`,
+      is_target_present: isTargetPresent, 
+      expected_key_search: expectedKey,
+      probe_type_practice: probeType // Speichere den Probe-Typ des Übungstrials
     },
     on_load: (trial) => { 
       showSAPBackground(true);
@@ -895,6 +918,16 @@
         });
       });
       window.appScreenStart = performance.now();
+
+      // --- HIER WIRD DIE DENKBLASE ROT HERVORGEHOBEN ---
+      const thoughtBubbleEl = document.querySelector('.thought-bubble');
+      if (thoughtBubbleEl && (trialNum === 1 || trialNum === 2 || probeType === 'no-probe')) {
+          thoughtBubbleEl.classList.add('highlight-red');
+          setTimeout(() => {
+              thoughtBubbleEl.classList.remove('highlight-red');
+          }, FEEDBACK_DURATION_MS * 1.5); // Etwas länger sichtbar lassen
+      }
+      // --- ENDE HIGHLIGHT ---
 
       let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
 
@@ -933,7 +966,6 @@
             practiceKeyListener = null; // Referenz löschen
 
             // --- Feedback-Logik für Übungstrial ---
-            // In Übungstrials ist es immer 'on-probe' und es gibt immer Feedback
             const feedbackDiv = document.createElement('div');
             feedbackDiv.className = 'feedback-text-overlay';
             
@@ -945,7 +977,6 @@
                 if (isTargetPresent && targetAppElement) { // Nur highlighten, wenn Target da ist UND Element gefunden wurde
                    targetAppElement.classList.add('correct-feedback-highlight-green');
                 }
-                // Für Target-Absent: Keine spezielle App zum Highlighten, nur Text-Feedback
             } else {
                 feedbackDiv.textContent = 'Falsch';
                 feedbackDiv.classList.add('incorrect'); // Rote Farbe für falsch
@@ -958,8 +989,71 @@
                 if (targetAppElement) { // Highlight von Target-App entfernen
                     targetAppElement.classList.remove('correct-feedback-highlight-green');
                 }
-                // Dann mit dem nächsten Schritt fortfahren (Bestätigen-Button)
-                setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, 'on-probe'), CONFIRM_BUTTON_DELAY_MS);
+                
+                if (probeType === 'no-probe') {
+                    // Logik für no-probe Übungstrials: zusätzliche Reaktionen abfangen
+                    let accidentalKeyPressListener = null;
+                    const startTimeForNoProbeWait = performance.now();
+                    const noProbeWaitDuration = 1500; // 1.5 Sekunden
+
+                    let noProbeTrialFullyFinished = false;
+
+                    accidentalKeyPressListener = (e_accidental) => {
+                        const pressedKeyAccidental = e_accidental.key.toLowerCase();
+                        if ((pressedKeyAccidental === KEY_TARGET_PRESENT || pressedKeyAccidental === KEY_TARGET_ABSENT) && !noProbeTrialFullyFinished) {
+                            e_accidental.preventDefault();
+                            noProbeTrialFullyFinished = true; // Verhindert mehrfache Aufrufe
+                            document.removeEventListener('keydown', accidentalKeyPressListener, true);
+                            clearTimeout(noProbeTimeout); // Stoppt den normalen Timeout
+
+                            const accidentalFeedbackDiv = document.createElement('div');
+                            accidentalFeedbackDiv.className = 'feedback-text-overlay incorrect';
+                            accidentalFeedbackDiv.textContent = 'Fehler: Hier erschien kein Bestätigen-Feld!';
+                            document.body.appendChild(accidentalFeedbackDiv);
+
+                            setTimeout(() => {
+                                accidentalFeedbackDiv.remove();
+                                jsPsych.finishTrial({
+                                    ...searchPhaseData,
+                                    rt_confirm: performance.now() - startTimeForNoProbeWait, // Zeit, ab der Bestätigen-Button erschienen *wäre*
+                                    response_key_confirm: pressedKeyAccidental,
+                                    probe_type: probeType,
+                                    confirm_tries: null,
+                                    accidental_keypress_no_probe: true // Benutzerdefinierter Datenwert
+                                });
+                            }, NO_PROBE_ERROR_FEEDBACK_DURATION_MS); // Hier die längere Dauer
+                        }
+                    };
+                    document.addEventListener('keydown', accidentalKeyPressListener, true);
+
+                    const noProbeTimeout = setTimeout(() => {
+                        if (!noProbeTrialFullyFinished) { // Nur beenden, wenn keine versehentliche Tasteneingabe erfolgte
+                            noProbeTrialFullyFinished = true;
+                            document.removeEventListener('keydown', accidentalKeyPressListener, true);
+
+                            // Feedback "Sehr gut!" für korrekte Nicht-Reaktion
+                            const goodJobFeedbackDiv = document.createElement('div');
+                            goodJobFeedbackDiv.className = 'feedback-text-overlay correct'; // Grüne Farbe für richtig
+                            goodJobFeedbackDiv.textContent = 'Sehr gut!';
+                            document.body.appendChild(goodJobFeedbackDiv);
+
+                            setTimeout(() => {
+                                goodJobFeedbackDiv.remove(); // Feedback nach kurzer Zeit entfernen
+                                jsPsych.finishTrial({
+                                    ...searchPhaseData,
+                                    rt_confirm: null,
+                                    response_key_confirm: null,
+                                    probe_type: probeType,
+                                    accidental_keypress_no_probe: false
+                                });
+                            }, FEEDBACK_DURATION_MS); // Zeigt "Sehr gut!" für die Standard-Feedback-Dauer
+                        }
+                    }, noProbeWaitDuration); // Warte 1.5s
+
+                } else {
+                    // Standardfall für on-probe und off-probe: Bestätigen-Button anzeigen
+                    setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, probeType), CONFIRM_BUTTON_DELAY_MS);
+                }
             }, FEEDBACK_DURATION_MS);
             // --- ENDE FEEDBACK LOGIK ---
           }
@@ -982,29 +1076,30 @@
   ];
 }
 
-  function makePracticeBlock(highlight) {
+  // makePracticeBlock wurde angepasst, um den displayBlockName als Argument zu akzeptieren
+  function makePracticeBlock(highlight, displayBlockName) {
     const step2_instruction = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe <b>mit einem dunkelgrauen Rahmen markiert</b>.`
       : `Finden Sie die Ziel-App im Raster.`;
 
     const practiceInstructionStimulus = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
-        <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">Übungsrunde</h2>
-        <p>Wir beginnen mit einer kurzen Übungsrunde mit ${totalPracticeTrials} Durchgängen, um den Ablauf kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau wie möglich aus:</p>
+        <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">Übungsrunde für ${displayBlockName}</h2>
+        <p>Wir beginnen mit einer kurzen Übungsrunde mit <b>${totalPracticeTrials}</b> Durchgängen, um alle Szenarien des Experiments kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau wie möglich aus:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
           <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn gezeigt wird.</li>
           <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken, oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass sie nicht vorhanden ist.</li> 
-          <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
+          <li style="margin-bottom: 15px;"><b>Achtung:</b> Manchmal erscheint ein Feld mit "<b>Bestätigen</b>", auf das Sie mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> reagieren müssen. Manchmal wird das "Bestätigen"-Feld jedoch NICHT erscheinen. Der Trial endet dann nach kurzer Zeit automatisch. Drücken Sie in diesem Fall KEINE weitere Taste.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">In der Übungsrunde wird das "Bestätigen"-Feld immer erscheinen. Die Ziel-App wird abwechselnd vorhanden und nicht vorhanden sein. Bei korrekter Antwort erhalten Sie ein kurzes Feedback.</p> <!-- GEÄNDERT: Hinweis auf Feedback -->
-        <p style="text-align: center; margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um die Übung zu beginnen.</p> <!-- GEÄNDERT: Text von "zweiten Block" zu "Übung" geändert -->
+        <p style="text-align: center; margin-top: 30px;">Während der Übung wird Ihnen in einer "Denkblase" erklärt, welches Szenario gerade geübt wird (Ziel-App vorhanden/nicht vorhanden, Bestätigen-Feld erscheint/nicht erscheint). Bei korrekter Reaktion erhalten Sie ein kurzes Feedback.</p>
+        <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um die Übung zu beginnen.</p>
       </div>
     `;
 
     const practiceInstructions = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: practiceInstructionStimulus, // GEÄNDERT: Angepasster Stimulus
-      choices: "ALL_KEYS",
+      stimulus: practiceInstructionStimulus, 
+      choices: [' '],
       css_classes: ['vertically-centered-content'],
       on_load: () => showSAPBackground(false),
       on_finish: () => showSAPBackground(true),
@@ -1021,28 +1116,53 @@
     practice_timeline.push(getShowTarget(practiceTargetApp, highlight, 'Übung'));
 
     for (let i = 0; i < totalPracticeTrials; i++) {
-        // Abwechselnd Target-Present (i=0, 2, 4, 6) und Target-Absent (i=1, 3, 5, 7) Trials
-        const isTargetPresentTrial = (i % 2 === 0); 
-        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, 'Übung', practiceTargetApp, isTargetPresentTrial);
+        const practiceConfig = practiceTrialConfigurations[i];
+        const single_trial_nodes = createSinglePracticeTrial(highlight, i + 1, 'Übung', practiceTargetApp, practiceConfig);
         practice_timeline.push(...single_trial_nodes);
     }
+    
+    // Debouncer Trial, um überlappende Tastendrücke abzufangen
+    const debouncerTrial = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: '<div style="visibility: hidden;">.</div>', // Unsichtbares Stimulus
+        choices: "NO_KEYS", // Reagiert nicht auf Tasten
+        trial_duration: 200, // Kurze Dauer von 200ms
+        on_load: () => showSAPBackground(false), // Hintergrund bleibt konsistent
+        on_finish: () => showSAPBackground(false), // Hintergrund bleibt konsistent
+        data: { trial_stage: 'debounce', block_type: 'Übung' }
+    };
+    practice_timeline.push(debouncerTrial);
 
-    const endPractice = {
+    const practiceCompletionMessage = {
       type: jsPsychHtmlKeyboardResponse,
       stimulus: `
-        <div style="font-size: 20px; text-align: center; max-width: 800px; margin: 0 auto;">
-          <p>Die Übungsrunde ist beendet.</p>
-          <p>Der Hauptblock beginnt jetzt.</p>
-          <p style="margin-top: 30px;">Drücken Sie eine <b>beliebige Taste</b>, um fortzufahren.</p>
-        </div>
-      `,
-      choices: "ALL_KEYS",
+          <div style="max-width: 900px; margin: 0 auto; text-align: left;">
+            <h2>Die Übungsrunde für ${displayBlockName} ist beendet.</h2>
+            <p>Es beginnt nun der Hauptteil des Experiments.</p>
+            <p>Denken Sie daran:</p>
+            <ul style="margin: 20px 0 20px 20px; padding-left: 20px;">
+                <li>Reagieren Sie auf die Ziel-App so schnell und genau wie möglich.</li>
+                <li>Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
+                <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
+                <li><b>Wichtig:</b> Wenn das "Bestätigen"-Feld NICHT erscheint, drücken Sie KEINE weitere Taste. Das Raster bleibt 1,5 Sekunden sichtbar, danach geht es automatisch weiter.</li>
+            </ul>
+            <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um mit dem Hauptteil fortzufahren.</p>
+          </div>
+        `,
+        choices: [' '],
       css_classes: ['vertically-centered-content'],
-      on_load: () => showSAPBackground(false),
-      on_finish: () => showSAPBackground(true),
-      data: { trial_stage: 'practice_end', block_type: 'Übung' }
+      on_load: (trial) => {
+          console.log(`[JSPSYCH] Loading practice completion message for block: ${displayBlockName}`); // Debugging-Ausgabe
+          showSAPBackground(false);
+      },
+      on_finish: () => {
+          console.log(`[JSPSYCH] Finished practice completion message for block: ${displayBlockName}`); // Debugging-Ausgabe
+          showSAPBackground(true);
+      },
+      data: { trial_stage: 'practice_end_transition', block_type: 'Übung', block_name_for_summary: displayBlockName }
     };
-    practice_timeline.push(endPractice);
+    practice_timeline.push(practiceCompletionMessage);
+
 
     return practice_timeline;
   }
@@ -1059,7 +1179,9 @@
     const displayBlockName = `Block ${blockOrderNumber}`;
     block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
     
-    block.push(...makePracticeBlock(highlight));
+    // makePracticeBlock wird nun mit dem displayBlockName aufgerufen
+    block.push(...makePracticeBlock(highlight, displayBlockName));
+
 
     let targetsForThisBlockNames;
     // GEÄNDERT: Nun 6 Targets pro Block, um eine volle Rotation (120 Trials / 20 Trials pro Target = 6 Targets) zu ermöglichen
@@ -1191,9 +1313,6 @@
 
   // probeType sicherstellen
   if (isPractice && !probeType) {
-    // For practice, it's always 'on-probe' as per user request to always show confirm.
-    // However, the original code passes 'on-probe' explicitly for practice, so this branch won't be hit if that's consistent.
-    // Keeping it here for safety, though the explicit passing in createSinglePracticeTrial makes it redundant.
     probeType = 'on-probe'; 
   } else if (!isPractice && !probeType) {
     console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off-probe'.");
@@ -1209,6 +1328,16 @@
   const nonTargetRects = rects.filter(r => !r.isTarget);
   const targetRect = rects.find(r => r.isTarget);
 
+  let thoughtBubbleRect = null;
+  // Denke daran, die Denkblase nur zu berücksichtigen, wenn sie da ist und es ein Übungstrial ist
+  if (isPractice) {
+    const thoughtBubbleEl = document.querySelector('.thought-bubble');
+    if (thoughtBubbleEl) {
+      thoughtBubbleRect = thoughtBubbleEl.getBoundingClientRect();
+    }
+  }
+
+
   while (tries < 1000 && !found) {
     // X innerhalb eingeschränkter Grenzen wählen
     const minX = leftBoundary;
@@ -1223,6 +1352,15 @@
     confirmY = topBoundary + Math.random() * (bottomBoundary - topBoundary - buttonH);
 
     const currentConfirmRect = { x: confirmX, y: confirmY, width: buttonW, height: buttonH };
+
+    let hasOverlapWithThoughtBubble = false;
+    if (thoughtBubbleRect) { // Nur prüfen, wenn Denkblase vorhanden ist
+        // Überprüfen, ob das Bestätigen-Feld die Denkblase überlappt
+        if (getOverlapArea(currentConfirmRect, thoughtBubbleRect) > 0) {
+            hasOverlapWithThoughtBubble = true;
+        }
+    }
+
 
     if (probeType === 'on-probe') {
       let hasSufficientOverlapWithNonTarget = false;
@@ -1240,7 +1378,7 @@
         if (overlapTarget > 0.001) overlapsTarget = true;
       }
 
-      if (hasSufficientOverlapWithNonTarget && !overlapsTarget) found = true;
+      if (hasSufficientOverlapWithNonTarget && !overlapsTarget && !hasOverlapWithThoughtBubble) found = true;
     } else {
       // off-probe: keine Überlappung und nicht zu nah an Apps
       let anyOverlap = false;
@@ -1257,7 +1395,7 @@
           break;
         }
       }
-      if (!anyOverlap && !tooCloseToApps) found = true;
+      if (!anyOverlap && !tooCloseToApps && !hasOverlapWithThoughtBubble) found = true;
     }
     tries++;
   }
@@ -1289,10 +1427,24 @@
           probe_type: probeType,
           confirm_tries: tries
         };
-        confirm.remove();
-        document.removeEventListener('keydown', confirmKeyListener, true); // Listener entfernen
-        confirmKeyListener = null; // Referenz löschen
-        callback(dataToReturn);
+        // --- HIER IST DIE NEUE LOGIK FÜR DEN ÜBUNGSTRIAL-BUTTON ---
+        if (isPractice) {
+            confirm.classList.add('correct-feedback-highlight-green'); // Highlight the button
+            setTimeout(() => {
+                confirm.classList.remove('correct-feedback-highlight-green'); // Remove highlight
+                confirm.remove(); // Remove button
+                document.removeEventListener('keydown', confirmKeyListener, true); // Listener entfernen
+                confirmKeyListener = null; // Referenz löschen
+                callback(dataToReturn); // Finish trial
+            }, FEEDBACK_DURATION_MS); // Keep it visible for FEEDBACK_DURATION_MS
+        } else {
+            // Original logic for actual trials: no visual feedback on button, remove immediately
+            confirm.remove();
+            document.removeEventListener('keydown', confirmKeyListener, true);
+            confirmKeyListener = null;
+            callback(dataToReturn);
+        }
+        // --- ENDE DER NEUEN LOGIK ---
       }
     }
   };
@@ -1315,6 +1467,35 @@
     1 
   );
 
+  // Bildschirm zwischen Block 1 und Block 2
+  const midBlockBreak = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: () => {
+      const nextBlockLabel = randomized_blocks[1].label; // Label des kommenden zweiten Blocks
+      return `
+        <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+          <h2>Block 1 ist abgeschlossen!</h2>
+          <p>Sie haben den ersten Teil des Experiments erfolgreich beendet.</p>
+          <p>Es folgt nun der zweite und letzte Block: <b>${nextBlockLabel}</b>.</p>
+          <p>Die Regeln bleiben dieselben:</p>
+          <ul style="max-width: 600px; margin: 20px auto 20px auto; text-align: left; padding-left: 20px;">
+              <li>Finden Sie die Ziel-App (oder stellen Sie fest, dass sie fehlt) und drücken Sie <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
+              <li>Reagieren Sie auf das "Bestätigen"-Feld mit <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
+              <li>Denken Sie daran: Manchmal erscheint das "Bestätigen"-Feld nicht. Drücken Sie dann bitte keine weitere Taste.</li>
+          </ul>
+          <p>Bitte konzentrieren Sie sich weiterhin auf schnelle und genaue Reaktionen.</p>
+          <p style="margin-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um mit Block 2 zu beginnen.</p>
+        </div>
+      `;
+    },
+    choices: [' '],
+    css_classes: ['vertically-centered-content'],
+    on_load: () => showSAPBackground(false),
+    on_finish: () => showSAPBackground(true),
+    data: { trial_stage: 'inter_block_break', block_type: 'Block-Übergang' }
+  };
+
+
   const secondBlock = makeBlockTrials(
     randomized_blocks[1].highlight,
     randomized_blocks[1].label,
@@ -1322,7 +1503,7 @@
     2 
   );
   
-  const timeline = [preload, startPage, ...firstBlock, ...secondBlock];
+  const timeline = [preload, startPage, ...firstBlock, midBlockBreak, ...secondBlock];
 
   jsPsych.run(timeline);
 </script>
