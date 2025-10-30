@@ -155,7 +155,9 @@
       width: 100%;
       height: 100%;
       gap: 2.5vw;
-      padding: 2.5vw;
+      /* ALT: padding: 2.5vw; */
+      /* NEU: Vertikales Padding reduziert, um mehr Platz für Apps zu schaffen */
+      padding: 1vw 2.5vw; 
       box-sizing: border-box;
       justify-items: center;
       align-items: center;
@@ -554,19 +556,11 @@
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
         <p>Das Experiment wird ungefähr 30 Minuten dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
-        <p>Es wird empfohlen, das Experiment an einem Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur durchzuführen.</p>
-        <p>In diesem Experiment sehen Sie Raster mit App-Kacheln. Zu Beginn jedes Blocks wird Ihnen eine Ziel-App gezeigt. Ihre 
-          Aufgabe ist es, die Ziel-App im nachfolgenden Raster so schnell wie möglich zu entdecken und auf sie zu reagieren:</p>
-        <ul style="margin: 20px 0 20px 20px; padding-left: 20px;">
-            <li>Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
-            <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
-        </ul>
-        <p>Anschließend erscheint normalerweise ein Feld „Bestätigen“, bei dem Sie mit der Taste <b>${KEY_TARGET_PRESENT.toUpperCase()} 
-          oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> so schnell wie möglich reagieren sollen. 
-          In einigen Fällen erscheint das "Bestätigen"-Feld jedoch nicht, und der Trial endet direkt nach Ihrem ersten Tastendruck. 
-          Bei diesen Trials wird das App-Raster noch für ca. 1,5s angezeigt, dann geht das nächste Trial automatisch los.
-          Es ist wichtig, dass Sie in dieser Situation nur mit Tastendruck auf die Ziel-App reagieren und bei Nichterscheinen des 
-          Bestätigen-Feldes KEINE Taste drücken.</p>
+        <p>Das Experiment sollte an einem Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur durchgeführt werden, 
+          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.</p>
+        <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
+        <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
+          immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
         <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um zu beginnen.</p>
       </div>
     `,
@@ -597,8 +591,6 @@
           <div style="max-width:900px; margin:0 auto; text-align:center;">
             <p><b>Dies ist die Ziel-App für die nächsten Trials.</b><br>
             Merken Sie sich Name und Symbol!</p>
-            <p> Es gibt während der nächsten Trials kein Feedback für die richtige Aushwahl der Ziel-App oder "Bestätigen" Button Position, ob Ihre Wahl richtig 
-              oder falsch war wird aber dennoch vermerkt.</p>
             <div style="display:flex; justify-content:center;">
               <div class="app-box${highlight ? ' highlight-target' : ''}" style="width:9vw; display:inline-flex;">
                 ${targetApp.name}<div class="symbol">${targetApp.symbol}</div>
@@ -623,12 +615,24 @@
     const stimulus_html = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">${blockName}</h2>
-        <p>In diesem Block sehen Sie in mehreren Durchgängen ein Raster mit Apps. Ihre Aufgabe ist es, in jedem Durchgang die folgenden Schritte so schnell und genau wie möglich auszuführen:</p>
+        <p>In diesem Block sehen Sie in mehreren Durchgängen ein Raster mit Apps. Ihre Aufgabe ist es, in jedem 
+          Durchgang die folgenden Schritte so schnell und genau wie möglich auszuführen:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
-          <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn und bei einem Wechsel angezeigt wird.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_present} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_absent} Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
-          <li style="margin-bottom: 15px;">Ein Feld mit "<b>Bestätigen</b>" erscheint an einer zufälligen Stelle. Reagieren Sie darauf ebenfalls so schnell wie möglich mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b>. Manchmal wird das "Bestätigen"-Feld jedoch nicht erscheinen. Bei diesen Trials wird das App-Raster noch für 3 Sekunden angezeigt, um Ihre Aufmerksamkeit zu überprüfen.</li>
+           <li style="margin-bottom: 15px;">Zu Beginn jeden Trials sehen Sie ungefähr in der Mitte Ihres Bildschirms
+            ein schwarzes Kreuz, bite fixieren Sie dieses Kreuz jeweils zu Beginn der Trials. Dadurch wird sichergestellt, 
+            dass Ihre Aufmerksamkeit an der richtigen Stelle ist.</li>
+          <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn und bei einem
+             Wechsel angezeigt wird.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction_present} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}
+            </b>, wenn Sie die Ziel-App entdecken.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction_absent} Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}
+            </b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
+          <li style="margin-bottom: 15px;">In den meisten Fällen erscheint ein Feld "<b>Bestätigen</b>",
+            an einer zufälligen Stelle. Falls es erscheint, reagieren Sie darauf ebenfalls so schnell wie möglich mit 
+            der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> (es ist 
+            völlig egal, mit welcher).</li>
+            <li style="margin-bottom: 15px;">Manchmal wird das "Bestätigen"-Feld jedoch nicht erscheinen. In diesen Fällen dürfen Sie nicht mit einem Tastendruck
+            reagieren; die Trials sind dafür da, Ihre Aufmerksamkeit zu testen.</li>
         </ol>
         <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p>
       </div>
@@ -736,8 +740,8 @@
         });
 
         let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
-        let accidentalKeyPressListener = null; // Deklariere hier, um Zugriff in on_unload zu haben
-        let noProbeTimeout = null; // Deklariere hier, um Zugriff in on_unload zu haben
+        let accidentalKeyPressListener = null; // Deklariert für Hauptblock `no-probe` Logik
+        let noProbeTimeout = null; // Deklariert für Hauptblock `no-probe` Logik
 
 
         currentKeyListener = (e) => { // Definition des Listeners
@@ -845,7 +849,6 @@
         // Zusätzlicher Cleanup für den accidentalKeyPressListener und Timeout, falls der Trial vorzeitig beendet wird
         // Diese Variablen müssen in einem gemeinsamen Scope deklariert werden, damit on_unload darauf zugreifen kann.
         // Die aktuelle Implementierung deklariert sie innerhalb des if-Blocks des KeyListeners, was on_unload den Zugriff verwehrt.
-        // Um das zu beheben, müssten 'accidentalKeyPressListener' und 'noProbeTimeout' auf der Ebene der on_load-Funktion deklariert werden.
         // Für diesen spezifischen Request belasse ich es so, da der Hauptrequest nur das Speichern betraf.
         // Sollten Probleme auftreten, müssten die Scopes angepasst werden.
       }
@@ -1151,13 +1154,22 @@
     const practiceInstructionStimulus = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">Übungsrunde für ${displayBlockName}</h2>
-        <p>Wir beginnen mit einer kurzen Übungsrunde mit <b>${totalPracticeTrials}</b> Durchgängen, um alle Szenarien des Experiments kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau wie möglich aus:</p>
+        <p>Wir beginnen mit einer kurzen Übungsrunde mit <b>${totalPracticeTrials}</b> Durchgängen, um alle 
+          Szenarien des Experiments kennenzulernen. Bitte führen Sie die folgenden Schritte so schnell und genau 
+          wie möglich aus:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
           <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn gezeigt wird.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken, oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass sie nicht vorhanden ist.</li> 
-          <li style="margin-bottom: 15px;"><b>Achtung:</b> Manchmal erscheint ein Feld mit "<b>Bestätigen</b>", auf das Sie mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> reagieren müssen. Manchmal wird das "Bestätigen"-Feld jedoch NICHT erscheinen. Der Trial endet dann nach kurzer Zeit automatisch. Drücken Sie in diesem Fall KEINE weitere Taste.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}
+            </b>, wenn Sie die Ziel-App entdecken, oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie 
+            feststellen, dass sie nicht vorhanden ist.</li> 
+          <li style="margin-bottom: 15px;"><b>Achtung:</b> Oft erscheint ein Feld mit "<b>Bestätigen</b>", auf das 
+            Sie mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> 
+            reagieren müssen. Manchmal wird das "Bestätigen"-Feld jedoch NICHT erscheinen. Der Trial endet dann nach
+             kurzer Zeit automatisch. Drücken Sie in diesem Fall KEINE weitere Taste.</li>
         </ol>
-        <p style="text-align: center; margin-top: 30px;">Während der Übung wird Ihnen in einer "Denkblase" erklärt, welches Szenario gerade geübt wird (Ziel-App vorhanden/nicht vorhanden, Bestätigen-Feld erscheint/nicht erscheint). Bei korrekter Reaktion erhalten Sie ein kurzes Feedback.</p>
+        <p style="text-align: center; margin-top: 30px;">Während der Übung werden Sie für jedes Szenario 
+          (Ziel-App vorhanden/nicht vorhanden, Bestätigen-Feld erscheint/nicht erscheint) nochmal an der 
+          Seite die Instruktionen sehen. Bei korrekter Reaktion erhalten Sie ein kurzes Feedback.</p>
         <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um die Übung zu beginnen.</p>
       </div>
     `;
@@ -1210,7 +1222,10 @@
                 <li>Reagieren Sie auf die Ziel-App so schnell und genau wie möglich.</li>
                 <li>Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
                 <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
-                <li><b>Wichtig:</b> Wenn das "Bestätigen"-Feld NICHT erscheint, drücken Sie KEINE weitere Taste. Das Raster bleibt 1,5 Sekunden sichtbar, danach geht es automatisch weiter.</li>
+                <li><b>Wichtig:</b> Wenn das "Bestätigen"-Feld NICHT erscheint, drücken Sie KEINE weitere Taste. 
+                  Das Raster bleibt 1,5 Sekunden sichtbar, danach geht es automatisch weiter.</li>
+                  <li><b>In den nachfolgenden Trials gibt es kein Feedback mehr für richtige oder falsche Reaktionen auf Ziel-App 
+                    und Bestätigen-Feld.</b></li>
             </ul>
             <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um mit dem Hauptteil fortzufahren.</p>
           </div>
