@@ -555,7 +555,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 10; 
+  const trialsPerBlock = 120; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -676,17 +676,19 @@
     const step2_instruction_present = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe immer <b>mit einem dunkelgrauen Rahmen markiert</b>.`
       : `Finden Sie die Ziel-App im Raster.`;
-    const step2_instruction_absent = `Stellen Sie fest, ob die Ziel-App nicht vorhanden ist.`;
+    const step2_instruction_absent = `Stellen Sie fest, ob die Ziel-App überhaupt vorhanden ist.`;
 
     const stimulus_html = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">${blockName}</h2>
         <p>Ihre Aufgabe ist es, in jedem Durchgang so schnell und genau wie möglich zu reagieren:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
-           <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
           <li style="margin-bottom: 15px;">Merken Sie sich die aktuelle <b>Ziel-App</b>.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_present} ${step2_instruction_absent}
-            Drücken Sie <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> (gefunden) oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b> (nicht gefunden).</li>
+          <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
+          <li style="margin-bottom: 15px;">Suchen Sie die Ziel-App im Raster. Drücken Sie die <b>Taste J</b>, 
+            wenn Sie die Ziel-App <b>finden</b>. 
+          <li style="margin-bottom: 15px;">Drücken sie die <b>Taste F</b>, wenn Sie feststellen, dass die Ziel-App <b>nicht vorhanden</b> ist.
+          <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
           <li style="margin-bottom: 15px;">Falls das Feld "<b>Bestätigen</b>" erscheint, reagieren Sie so schnell wie möglich 
             mit <b>${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> (beliebige Taste).</li>
             <li style="margin-bottom: 15px;">Erscheint das "Bestätigen"-Feld nicht, drücken Sie <b>keine</b> weitere Taste.</li>
@@ -837,7 +839,7 @@
               // --- NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
               if (currentTrialProbeType === 'no-probe') {
                   const startTimeForNoProbeWait = performance.now();
-                  const noProbeWaitDuration = 1500; // 1.5 Sekunden
+                  const noProbeWaitDuration = 1500; // 2 Sekunden
 
                   let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no-probe Handler
 

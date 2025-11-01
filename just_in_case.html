@@ -277,10 +277,10 @@
         /* Wichtig: Dies überschreibt die globale .app-container Regel nur für diesen Kontext */
         .practice-area .app-container {
           width: 70%; /* Platz für die Denkblase lassen */
-          height: 100%; /* HINZUGEFÜGT */
+          height: auto; /* Muss auto sein, damit es sich an den Inhalt anpasst */
           min-height: 0; /* Ermöglicht dem app-container, bei Bedarf zu schrumpfen */
-          position: relative;
-          flex-shrink: 1; /* <-- GEÄNDERT: Jetzt auch auf großen Bildschirmen shrinkable */
+          position: relative; 
+          flex-shrink: 0; /* Verhindert Schrumpfung (Standardverhalten im Zeilen-Layout) */
           margin-right: 2vw; /* Abstand zwischen Grid und Denkblase */
           display: flex; /* Flex-Container für app-grid */
           flex-direction: column; /* Stapelt das app-grid vertikal */
@@ -353,7 +353,7 @@
           /* App-Container innerhalb der Practice Area */
           .practice-area .app-container {
             width: 95%;             /* Breiteres App-Grid */
-            height: 100%; /* HINZUGEFÜGT */
+            height: auto;           /* Automatische Höhe */
             margin-right: 0;
             margin-bottom: 8px;     /* Abstand zwischen Grid und Denkblase reduzieren */
             flex-grow: 1;           /* Erlaubt dem App-Container, den Raum zu nutzen */
@@ -367,9 +367,8 @@
           }
   
           /* App-Boxen innerhalb des Practice App-Containers */
-          /* max-width: 80px; wurde hier ENTFERNT, um flexible Skalierung zu ermöglichen */
           .practice-area .app-container .app-box {
-            /* max-width: 80px; <-- ENTFERNT */
+            max-width: 80px;        /* Feste maximale Breite für kompaktere Apps */
             font-size: 14px;        /* Kleinere Schriftgröße für App-Namen */
             padding: 2px;           /* Inneres Padding der Box reduzieren */
           }
@@ -410,10 +409,8 @@
               gap: 1vw; /* Noch kleinerer Abstand zwischen App-Boxen */
               padding: 0.1vw; /* Minimales Padding */
           }
-          /* App-Boxen innerhalb des Practice App-Containers */
-          /* max-width: 65px; wurde hier ENTFERNT, um flexible Skalierung zu ermöglichen */
           .practice-area .app-container .app-box {
-              /* max-width: 65px; <-- ENTFERNT */
+              max-width: 65px; /* Noch kleinere App-Boxen */
               font-size: 12px; /* Kleinere Schriftgröße */
               padding: 1px;    /* Minimales Padding */
           }
@@ -431,8 +428,10 @@
         .practice-area .app-container + div[style*="margin-top:2em"] {
             display: none; 
         }
-        /* Die CSS-Regel zum Ausblenden des "NO_KEYS"-Prompts ist nicht mehr notwendig,
-           da wir das Plugin in den Übungstrials geändert haben. */
+        /* Die vorherige Regel ist jetzt nicht mehr notwendig, da wir das Plugin selbst ändern. */
+        /* .jspsych-trial:has(.practice-area) > .jspsych-prompt {
+            display: none !important;
+        } */
       </style>
 </head>
 <body>
@@ -677,17 +676,19 @@
     const step2_instruction_present = highlight
       ? `Finden Sie die Ziel-App im Raster. Sie ist zur Hilfe immer <b>mit einem dunkelgrauen Rahmen markiert</b>.`
       : `Finden Sie die Ziel-App im Raster.`;
-    const step2_instruction_absent = `Stellen Sie fest, ob die Ziel-App nicht vorhanden ist.`;
+    const step2_instruction_absent = `Stellen Sie fest, ob die Ziel-App überhaupt vorhanden ist.`;
 
     const stimulus_html = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">${blockName}</h2>
         <p>Ihre Aufgabe ist es, in jedem Durchgang so schnell und genau wie möglich zu reagieren:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
-           <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
           <li style="margin-bottom: 15px;">Merken Sie sich die aktuelle <b>Ziel-App</b>.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_present} ${step2_instruction_absent}
-            Drücken Sie <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> (gefunden) oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b> (nicht gefunden).</li>
+          <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
+          <li style="margin-bottom: 15px;">Suchen Sie die Ziel-App im Raster. Drücken Sie die <b>Taste J</b>, 
+            wenn Sie die Ziel-App <b>finden</b>. 
+          <li style="margin-bottom: 15px;">Drücken sie die <b>Taste F</b>, wenn Sie feststellen, dass die Ziel-App <b>nicht vorhanden</b> ist.
+          <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
           <li style="margin-bottom: 15px;">Falls das Feld "<b>Bestätigen</b>" erscheint, reagieren Sie so schnell wie möglich 
             mit <b>${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> (beliebige Taste).</li>
             <li style="margin-bottom: 15px;">Erscheint das "Bestätigen"-Feld nicht, drücken Sie <b>keine</b> weitere Taste.</li>
@@ -838,7 +839,7 @@
               // --- NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
               if (currentTrialProbeType === 'no-probe') {
                   const startTimeForNoProbeWait = performance.now();
-                  const noProbeWaitDuration = 1500; // 1.5 Sekunden
+                  const noProbeWaitDuration = 1500; // 2 Sekunden
 
                   let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no-probe Handler
 
@@ -933,7 +934,6 @@
   // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren),
   // diese werden in einem 4x4 Grid gerendert, d.h. es gibt leere Zellen
   const isTargetPresent = practiceConfig.isTargetPresent; // Bestimmt, ob die Ziel-App vorhanden ist
-  // KORREKTUR: Tippfehler `CprobeType` zu `probeType`
   const probeType = practiceConfig.probeType; // Bestimmt den Probe-Typ für diesen Übungstrial
   const numAppsInGrid = 4; // Practice trials always use 4 app boxes in a 4x4 grid
 
@@ -973,7 +973,7 @@
   let practiceKeyListener = null; // Variable, um den Listener zu speichern
 
   const practiceSearchTrial = {
-    // *** ÄNDERUNG: `jsPsychHtmlButtonResponse` wurde zu `jsPsychHtmlKeyboardResponse` geändert ***
+    // *** ÄNDERUNG HIER: `jsPsychHtmlButtonResponse` wurde zu `jsPsychHtmlKeyboardResponse` geändert ***
     // *** `choices: 'NO_KEYS'` wurde zu `choices: []` geändert, um den Prompt zu unterdrücken ***
     type: jsPsychHtmlKeyboardResponse,
     stimulus: () => {
@@ -1023,8 +1023,8 @@
       `;
     },
     
-    choices: [], // GEÄNDERT: Leeres Array, um interne Tastatur-Abfrage zu deaktivieren
-    prompt: '', // Bleibt leer, um den Prompt-Text zu unterdrücken
+    choices: [], // <--- GEÄNDERT: Leeres Array, um interne Tastatur-Abfrage zu deaktivieren
+    prompt: '', // <--- Bleibt leer, um den Prompt-Text zu unterdrücken
     data: {
       trial_stage: 'search_task',
       block_type: blockType,
