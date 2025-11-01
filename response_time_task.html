@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
     <style>
-      /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
+      /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content'
       im JavaScript-Code geben. */
         .jspsych-trial.vertically-centered-content .jspsych-display-element {
             display: flex;
@@ -428,12 +428,10 @@
         .practice-area .app-container + div[style*="margin-top:2em"] {
             display: none; 
         }
-        /* Hide the jspsych-prompt specifically when a practice-area is present */
-        /* Dies zielt auf den Prompt ab, der NACH dem Stimulus-Inhalt erscheint */
-        .jspsych-content .practice-area ~ .jspsych-prompt {
+        /* Die vorherige Regel ist jetzt nicht mehr notwendig, da wir das Plugin selbst ändern. */
+        /* .jspsych-trial:has(.practice-area) > .jspsych-prompt {
             display: none !important;
-    }
-  
+        } */
       </style>
 </head>
 <body>
@@ -909,7 +907,6 @@
         // Zusätzlicher Cleanup für den accidentalKeyPressListener und Timeout, falls der Trial vorzeitig beendet wird
         // Diese Variablen müssen in einem gemeinsamen Scope deklariert werden, damit on_unload darauf zugreifen kann.
         // Die aktuelle Implementierung deklariert sie innerhalb des if-Blocks des KeyListeners, was on_unload den Zugriff verwehrt.
-        // Für diesen spezifischen Request belasse ich es so, da der Hauptrequest nur das Speichern betraf.
         // Sollten Probleme auftreten, müssten die Scopes angepasst werden.
       }
     };
@@ -974,7 +971,9 @@
   let practiceKeyListener = null; // Variable, um den Listener zu speichern
 
   const practiceSearchTrial = {
-    type: jsPsychHtmlButtonResponse, // <--- Wichtig: Hier weiterhin HtmlButtonResponse verwenden
+    // *** ÄNDERUNG HIER: `jsPsychHtmlButtonResponse` wurde zu `jsPsychHtmlKeyboardResponse` geändert ***
+    // *** `choices: 'NO_KEYS'` wurde zu `choices: []` geändert, um den Prompt zu unterdrücken ***
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: () => {
       // Wir nutzen denselben renderer renderLayoutRandomGrid, der jetzt 4x4 Positionen zur Verfügung hat.
       // Da wir nur 4 Apps übergeben, erscheinen genau 4 Boxen in zufälligen Zellen des 4x4 Grids.
@@ -1022,8 +1021,8 @@
       `;
     },
     
-    choices: 'NO_KEYS', // <--- Wichtig: Hier weiterhin 'NO_KEYS' verwenden, da der Listener manuell hinzugefügt wird
-    prompt: '',
+    choices: [], // <--- GEÄNDERT: Leeres Array, um interne Tastatur-Abfrage zu deaktivieren
+    prompt: '', // <--- Bleibt leer, um den Prompt-Text zu unterdrücken
     data: {
       trial_stage: 'search_task',
       block_type: blockType,

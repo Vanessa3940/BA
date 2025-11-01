@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
     <style>
-      /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
+      /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content'
       im JavaScript-Code geben. */
         .jspsych-trial.vertically-centered-content .jspsych-display-element {
             display: flex;
@@ -277,10 +277,10 @@
         /* Wichtig: Dies überschreibt die globale .app-container Regel nur für diesen Kontext */
         .practice-area .app-container {
           width: 70%; /* Platz für die Denkblase lassen */
-          height: auto; /* Muss auto sein, damit es sich an den Inhalt anpasst */
+          height: 100%; /* HINZUGEFÜGT */
           min-height: 0; /* Ermöglicht dem app-container, bei Bedarf zu schrumpfen */
-          position: relative; 
-          flex-shrink: 0; /* Verhindert Schrumpfung (Standardverhalten im Zeilen-Layout) */
+          position: relative;
+          flex-shrink: 1; /* <-- GEÄNDERT: Jetzt auch auf großen Bildschirmen shrinkable */
           margin-right: 2vw; /* Abstand zwischen Grid und Denkblase */
           display: flex; /* Flex-Container für app-grid */
           flex-direction: column; /* Stapelt das app-grid vertikal */
@@ -353,7 +353,7 @@
           /* App-Container innerhalb der Practice Area */
           .practice-area .app-container {
             width: 95%;             /* Breiteres App-Grid */
-            height: auto;           /* Automatische Höhe */
+            height: 100%; /* HINZUGEFÜGT */
             margin-right: 0;
             margin-bottom: 8px;     /* Abstand zwischen Grid und Denkblase reduzieren */
             flex-grow: 1;           /* Erlaubt dem App-Container, den Raum zu nutzen */
@@ -367,8 +367,9 @@
           }
   
           /* App-Boxen innerhalb des Practice App-Containers */
+          /* max-width: 80px; wurde hier ENTFERNT, um flexible Skalierung zu ermöglichen */
           .practice-area .app-container .app-box {
-            max-width: 80px;        /* Feste maximale Breite für kompaktere Apps */
+            /* max-width: 80px; <-- ENTFERNT */
             font-size: 14px;        /* Kleinere Schriftgröße für App-Namen */
             padding: 2px;           /* Inneres Padding der Box reduzieren */
           }
@@ -409,8 +410,10 @@
               gap: 1vw; /* Noch kleinerer Abstand zwischen App-Boxen */
               padding: 0.1vw; /* Minimales Padding */
           }
+          /* App-Boxen innerhalb des Practice App-Containers */
+          /* max-width: 65px; wurde hier ENTFERNT, um flexible Skalierung zu ermöglichen */
           .practice-area .app-container .app-box {
-              max-width: 65px; /* Noch kleinere App-Boxen */
+              /* max-width: 65px; <-- ENTFERNT */
               font-size: 12px; /* Kleinere Schriftgröße */
               padding: 1px;    /* Minimales Padding */
           }
@@ -428,24 +431,8 @@
         .practice-area .app-container + div[style*="margin-top:2em"] {
             display: none; 
         }
-
-        /* NEUE AGGRESSIVE CSS-REGEL, um "NO_KEYS" (oder andere unerwünschte Elemente) in Übungstrials IMMER auszublenden */
-        /* Diese Regel zielt auf ALLE direkten Kindelemente von .jspsych-content ab, die NICHT die .practice-area sind,
-           wenn der jspsych-container die Klasse 'practice-mode-active' (also im Übungsmodus) hat. */
-        #jspsych-container.practice-mode-active .jspsych-content > *:not(.practice-area) {
-            display: none !important;       /* Verbirgt das Element vollständig */
-            visibility: hidden !important;  /* Macht es unsichtbar, auch wenn display:none ignoriert wird */
-            height: 0 !important;           /* Erzwingt eine Höhe von Null */
-            min-height: 0 !important;       /* Erzwingt eine minimale Höhe von Null */
-            max-height: 0 !important;       /* Erzwingt eine maximale Höhe von Null */
-            margin: 0 !important;           /* Erzwingt alle Margins auf Null */
-            padding: 0 !important;          /* Erzwingt alle Paddings auf Null */
-            line-height: 0 !important;      /* Erzwingt eine Zeilenhöhe von Null */
-            font-size: 0 !important;        /* Erzwingt eine Schriftgröße von Null */
-            overflow: hidden !important;    /* Verbirgt jeglichen Inhalt, der überläuft */
-            border: none !important;        /* Entfernt mögliche Rahmen */
-        }
-  
+        /* Die CSS-Regel zum Ausblenden des "NO_KEYS"-Prompts ist nicht mehr notwendig,
+           da wir das Plugin in den Übungstrials geändert haben. */
       </style>
 </head>
 <body>
@@ -569,7 +556,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 10; 
+  const trialsPerBlock = 120; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -775,7 +762,7 @@
         return html;
       },
       choices: 'NO_KEYS', 
-      prompt: '', // WICHTIG: prompt hinzugefügt, um "NO_KEYS" in allen Fällen zu unterdrücken
+      prompt: '',
       data: { 
         trial_stage: 'search_task', 
         block_type: blockType, 
@@ -946,6 +933,7 @@
   // Übung: nur 4 sichtbare Apps (1 Target + 3 Distraktoren),
   // diese werden in einem 4x4 Grid gerendert, d.h. es gibt leere Zellen
   const isTargetPresent = practiceConfig.isTargetPresent; // Bestimmt, ob die Ziel-App vorhanden ist
+  // KORREKTUR: Tippfehler `CprobeType` zu `probeType`
   const probeType = practiceConfig.probeType; // Bestimmt den Probe-Typ für diesen Übungstrial
   const numAppsInGrid = 4; // Practice trials always use 4 app boxes in a 4x4 grid
 
@@ -985,7 +973,9 @@
   let practiceKeyListener = null; // Variable, um den Listener zu speichern
 
   const practiceSearchTrial = {
-    type: jsPsychHtmlButtonResponse, // <--- Wichtig: Hier weiterhin HtmlButtonResponse verwenden
+    // *** ÄNDERUNG: `jsPsychHtmlButtonResponse` wurde zu `jsPsychHtmlKeyboardResponse` geändert ***
+    // *** `choices: 'NO_KEYS'` wurde zu `choices: []` geändert, um den Prompt zu unterdrücken ***
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: () => {
       // Wir nutzen denselben renderer renderLayoutRandomGrid, der jetzt 4x4 Positionen zur Verfügung hat.
       // Da wir nur 4 Apps übergeben, erscheinen genau 4 Boxen in zufälligen Zellen des 4x4 Grids.
@@ -1032,8 +1022,9 @@
         <div style="margin-top:2em; font-size:1.2vw; color:#333; display: none;"></div>
       `;
     },
-    choices: 'NO_KEYS', // <--- Wichtig: Hier weiterhin 'NO_KEYS' verwenden
-    prompt: '', // WICHTIG: prompt hinzugefügt, um "NO_KEYS" in Übungstrials zu unterdrücken
+    
+    choices: [], // GEÄNDERT: Leeres Array, um interne Tastatur-Abfrage zu deaktivieren
+    prompt: '', // Bleibt leer, um den Prompt-Text zu unterdrücken
     data: {
       trial_stage: 'search_task',
       block_type: blockType,
@@ -1044,9 +1035,6 @@
     },
     on_load: (trial) => { 
       showSAPBackground(true);
-      // NEU: Füge eine spezielle Klasse zum jspsych-container hinzu
-      document.getElementById('jspsych-container').classList.add('practice-mode-active');
-
       // update rectangles usw. (wie zuvor)
       window.appRects = [];
       document.querySelectorAll('.app-box').forEach((box, i) => {
@@ -1206,9 +1194,6 @@
       document.addEventListener('keydown', practiceKeyListener, true); // Listener hinzufügen
     },
     on_unload: () => { // Sicherstellen, dass der Listener im Zweifelsfall entfernt wird
-      // NEU: Entferne die spezielle Klasse, wenn der Übungstrial endet
-      document.getElementById('jspsych-container').classList.remove('practice-mode-active');
-
       if (practiceKeyListener) {
           document.removeEventListener('keydown', practiceKeyListener, true);
           practiceKeyListener = null;
