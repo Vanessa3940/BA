@@ -8,366 +8,433 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.1"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
     <style>
-    /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
-    im JavaScript-Code geben. */
-      .jspsych-trial.vertically-centered-content .jspsych-display-element {
+      /* Diese Regel wird nur auf Trials angewendet, denen wir die Klasse'vertically-centered-content' 
+      im JavaScript-Code geben. */
+        .jspsych-trial.vertically-centered-content .jspsych-display-element {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Zentriert den Inhalt vertikal */
+            height: 100%;            /* Füllt den gesamten Platz aus */
+        }
+  
+        /* Diese Regel verhindert, dass unser App-Grid von der Zentrierung betroffen ist,
+          und behebt das Problem der Rechtsverschiebung. */
+        .jspsych-display-element {
+            width: 100%;
+        }
+  
+        /* Passt die Breite der Textblöcke NUR auf den zentrierten Seiten an */
+        .jspsych-trial.vertically-centered-content .jspsych-display-element > div {
+          max-width: 900px; /* Behält die maximale Breite für Lesbarkeit bei */
+          width: 100%;
+          text-align: left; /* Stellt sicher, dass der Text linksbündig bleibt */
+        }
+        
+        html, body {
+          width: 100vw;
+          height: calc(var(--vh, 1vh) * 100);
+          max-height: calc(var(--vh, 1vh) * 100);
+          overflow: hidden !important;
+          margin: 0;
+          padding: 0;
+          font-family: Arial, sans-serif;
+          background: #f5f6f7;
+        }
+        .sap-header {
+          position: fixed;
+          top: 0; left: 0; width: 100vw; z-index: 0;
+          background: #fff;
+          height: 82px;
+          box-shadow: 0 2px 3px 0 rgba(0,0,0,0.05), 0 1px 0px 0 #e2e5e7;
+          border-bottom: 1.5px solid #e2e5e7;
+          display: flex;
+          align-items: center;
+          padding: 0 30px;
+        }
+        .sap-logo {
+          height: 35px;
+          width: 68px;
+          margin-right: 24px;
+        }
+        .header-menu {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+        .menu-item {
+          color: #222;
+          font-size: 17px;
+          font-weight: bold;
+          margin-right: 18px;
+          cursor: pointer;
+          padding: 7px 10px;
+          border-radius: 6px;
+        }
+        .menu-item.active {
+          color: #186FDB;
+          border-bottom: 2px solid #186FDB;
+        }
+        .header-right {
+          margin-left: auto;
+          display: flex;
+          gap: 18px;
+          align-items: center;
+        }
+        .header-ico {
+          font-size: 20px;
+          color: #444;
+          background: #f8f8f8;
+          border-radius: 50%;
+          padding: 5px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 2px;
+        }
+        .header-avatar {
+          width: 35px;
+          height: 35px;
+          background: #dbeafe;
+          color: #2981ea;
+          border-radius: 999px;
+          display: flex;
+          align-items: center; justify-content: center;
+          font-size: 18px; font-weight: bold;
+          margin-left: 10px;
+        }
+        .sap-overview {
+          position: fixed;
+          top: 90px; left: 2.3vw; z-index: 0;
+          font-size: 2.0vw; font-weight: bold; color: #262f38;
+          text-shadow: 0 1px 0 #fff;
+          letter-spacing: 0;
+          margin-bottom: 16px;
+        }
+        .sap-grey-bg {
+          position: fixed;
+          top: 125px;
+          left: 0;
+          width: 100vw;
+          height: calc(100vh - 125px);
+          background: linear-gradient(180deg,#F5F7F8 80%,#EDF0F1 100%);
+          z-index: 0;
+        }
+        #jspsych-container { /* Nur jspsych-container, nicht alle .app-container */
+          width: 100vw;
+          overflow: hidden;
+          position: relative;
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw); 
+        }
+  
+        /* Globale app-container Regeln - für Haupttrials relevant */
+        .app-container {
+          width: 100vw;
+          height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw);
+          overflow: hidden;
+          position: relative;
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+  
+        .app-grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          width: 100%;
+          height: 100%;
+          gap: 2.5vw;
+          padding: 1vw 2.5vw; 
+          box-sizing: border-box;
+          justify-items: center;
+          align-items: center;
+        }
+  
+        .app-box {
+          aspect-ratio: 1 / 1;
+          width: 100%;
+          max-width: 9vw;
+          max-height: 100%;
+          background-color: white;
+          border: 2px solid #ccc;
+          border-radius: 1vw;
+          box-shadow: 0.2vw 0.2vw 0.5vw rgba(0, 0, 0, 0.2);
           display: flex;
           flex-direction: column;
-          justify-content: center; /* Zentriert den Inhalt vertikal */
-          height: 100%;            /* Füllt den gesamten Platz aus */
-      }
-
-      /* Diese Regel verhindert, dass unser App-Grid von der Zentrierung betroffen ist,
-        und behebt das Problem der Rechtsverschiebung. */
-      .jspsych-display-element {
-          width: 100%;
-      }
-
-      /* Passt die Breite der Textblöcke NUR auf den zentrierten Seiten an */
-      .jspsych-trial.vertically-centered-content .jspsych-display-element > div {
-        max-width: 900px; /* Behält die maximale Breite für Lesbarkeit bei */
-        width: 100%;
-        text-align: left; /* Stellt sicher, dass der Text linksbündig bleibt */
-      }
-      
-      html, body {
-        width: 100vw;
-        /* NEU: Verwendet die dynamisch berechnete --vh Variable */
-        height: calc(var(--vh, 1vh) * 100);
-        max-height: calc(var(--vh, 1vh) * 100);
-        overflow: hidden !important;
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-        background: #f5f6f7;
-      }
-      .sap-header {
-        position: fixed;
-        top: 0; left: 0; width: 100vw; z-index: 0;
-        background: #fff;
-        height: 82px;
-        box-shadow: 0 2px 3px 0 rgba(0,0,0,0.05), 0 1px 0px 0 #e2e5e7;
-        border-bottom: 1.5px solid #e2e5e7;
-        display: flex;
-        align-items: center;
-        padding: 0 30px;
-      }
-      .sap-logo {
-        height: 35px;
-        width: 68px;
-        margin-right: 24px;
-      }
-      .header-menu {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-      .menu-item {
-        color: #222;
-        font-size: 17px;
-        font-weight: bold;
-        margin-right: 18px;
-        cursor: pointer;
-        padding: 7px 10px;
-        border-radius: 6px;
-      }
-      .menu-item.active {
-        color: #186FDB;
-        border-bottom: 2px solid #186FDB;
-      }
-      .header-right {
-        margin-left: auto;
-        display: flex;
-        gap: 18px;
-        align-items: center;
-      }
-      .header-ico {
-        font-size: 20px;
-        color: #444;
-        background: #f8f8f8;
-        border-radius: 50%;
-        padding: 5px;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 2px;
-      }
-      .header-avatar {
-        width: 35px;
-        height: 35px;
-        background: #dbeafe;
-        color: #2981ea;
-        border-radius: 999px;
-        display: flex;
-        align-items: center; justify-content: center;
-        font-size: 18px; font-weight: bold;
-        margin-left: 10px;
-      }
-      .sap-overview {
-        position: fixed;
-        top: 90px; left: 2.3vw; z-index: 0;
-        font-size: 2.0vw; font-weight: bold; color: #262f38;
-        text-shadow: 0 1px 0 #fff;
-        letter-spacing: 0;
-        margin-bottom: 16px;
-      }
-      .sap-grey-bg {
-        position: fixed;
-        top: 125px;
-        left: 0;
-        width: 100vw;
-        height: calc(100vh - 125px);
-        background: linear-gradient(180deg,#F5F7F8 80%,#EDF0F1 100%);
-        z-index: 0;
-      }
-      #jspsych-container,
-      .app-container {
-        width: 100vw;
-        overflow: hidden;
-        position: relative;
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        
-        /* Ursprünglich: height: calc(100vh - 125px); */
-        /* NEU: Verwendet --vh und zieht einen zusätzlichen Puffer am unteren Rand ab */
-        height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw); 
-      }
-
-    .app-container {
-      width: 100vw;
-      /* Ursprünglich: height: calc(100vh - 125px); */
-      /* NEU: Muss dieselbe Berechnung verwenden wie #jspsych-container, da es dessen Höhe erbt */
-      height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw);
-      overflow: hidden;
-      position: relative;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      width: 100%;
-      height: 100%;
-      gap: 2.5vw;
-      /* ALT: padding: 2.5vw; */
-      /* NEU: Vertikales Padding reduziert, um mehr Platz für Apps zu schaffen */
-      padding: 1vw 2.5vw; 
-      box-sizing: border-box;
-      justify-items: center;
-      align-items: center;
-    }
-
-    .app-box {
-      aspect-ratio: 1 / 1;
-      width: 100%;
-      max-width: 9vw;
-      max-height: 100%;
-      background-color: white;
-      border: 2px solid #ccc;
-      border-radius: 1vw;
-      box-shadow: 0.2vw 0.2vw 0.5vw rgba(0, 0, 0, 0.2);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-      user-select: none;
-      text-align: center;
-      font-size: 1.6vw;
-      transition: border 0.2s;
-      z-index: 10;
-      min-width: 0;
-      min-height: 0;
-    }
-
-    .empty-app {
-      background: #e4e8ec !important;
-      border: 2px solid #bbb;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .app-box.empty-app:hover {
-      background: #cdd8df !important;
-    }
-      .symbol {
-        font-size: 2vw;
-        color: #555;
-      }
-      .fixation-screen {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background-color: white;
-        font-size: 5vw;
-      }
-      .confirm-box {
-        position: absolute;
-        background-color: #fff;
-        color: #1976d2;
-        padding: 0.2vw 0.7vw;
-        border-radius: 8px;
-        font-size: 1vw;
-        cursor: pointer;
-        z-index: 20;
-        border: 2px solid  #1976d2;
-        font-weight: 500;
-        box-shadow: none;
-        font-family: inherit;
-        width: 4vw;
-        height: 2.2vw;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .highlight-target {
-        border: 4px solid #888 !important;
-        box-shadow: 0 0 12px #bbb !important;
-      }
-      /* NEUE CSS FÜR FEEDBACK */
-      .correct-feedback-highlight-green {
-        border: 4px solid #4CAF50 !important; /* Grüner Rand */
-        box-shadow: 0 0 15px rgba(76, 175, 80, 0.7) !important; /* Grüner Glanz */
-      }
-      .feedback-text-overlay {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 3vw; 
-        font-weight: bold;
-        padding: 0.5vw 1vw;
-        border-radius: 8px;
-        z-index: 100; /* Sicherstellen, dass es über allem anderen liegt */
-        text-align: center;
-        pointer-events: none; /* Sorgt dafür, dass Klicks durchgehen */
-        min-width: 100px; /* Mindestbreite, damit der Text gut sichtbar ist */
-      }
-      .feedback-text-overlay.correct {
-        color: #4CAF50; /* Grüner Text */
-        background-color: rgba(232, 245, 233, 0.9); /* Leicht grüner, halbtransparenter Hintergrund */
-      }
-      .feedback-text-overlay.incorrect {
-        color: #F44336; /* Roter Text */
-        background-color: rgba(255, 235, 238, 0.9); /* Leicht roter, halbtransparenter Hintergrund */
-      }
-      /* NEUE CSS FÜR DENKBLASEN-HIGHLIGHT */
-      .thought-bubble.highlight-red {
-          border: 4px solid #F44336 !important; /* Roter Rand, 4px für mehr Sichtbarkeit */
-          box-shadow: 0 0 15px rgba(244, 67, 54, 0.7) !important; /* Roter Glanz */
-      }
-      .thought-bubble.highlight-red::before {
-          border-color: transparent #F44336 transparent transparent; /* Roten Pfeilrand anpassen */
-      }
-      /* Der innere Pfeil muss nicht angepasst werden, da er den Hintergrund der Blase hat */
-
-      @media (max-width: 704px) {
-        .sap-overview { font-size: 26px; }
-        .app-box { font-size: 18px; }
-        .symbol { font-size: 23px; }
-        .confirm-box { font-size: 13px; width: 60px; height: 40px; }
-        .app-grid { gap: 2vw; }
-        .feedback-text-overlay { font-size: 26px; } /* Anpassung für mobile Ansicht */
-      }
-
-      /* NEUE CSS FÜR PRACTICE-BEREICH UND DENKBLASE */
-      .practice-area {
-        display: flex;
-        justify-content: center; /* Zentriert den gesamten Bereich */
-        align-items: flex-start; /* Oben ausrichten */
-        width: 100%;
-        /* NEU: Verwendet die dynamisch berechnete --vh Variable */
-        height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw); /* Maximale Höhe des Experimentbereichs */
-        box-sizing: border-box;
-        padding: 20px; /* Etwas Abstand um den Bereich */
-        overflow: hidden; /* Verhindert internes Scrollen */
-      }
-
-      /* Anpassung des app-container innerhalb des practice-area */
-      .practice-area .app-container {
-        width: 70%; /* Platz für die Denkblase lassen */
-        /* NEU: Verwendet die dynamisch berechnete --vh Variable */
-        height: calc((var(--vh, 1vh) * 100) - 125px - 2.5vw);
-        position: relative; 
-        flex-shrink: 0; /* Verhindert Schrumpfung */
-        margin-right: 2vw; /* Abstand zwischen Grid und Denkblase */
-      }
-
-      .thought-bubble {
-        flex-grow: 1; /* Nimmt den restlichen Platz ein */
-        max-width: 25%; /* Begrenzt die maximale Breite */
-        background-color: #f8f8f8; /* Heller Hintergrund */
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        padding: 1.2vw 1.5vw; /* Responsives Padding */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-        font-size: 1.1vw; /* Responsive Schriftgröße */
-        line-height: 1.5;
-        color: #333;
-        z-index: 50;
-        box-sizing: border-box;
-        text-align: left;
-        position: relative; /* Für den Pfeil */
-        transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Übergang für Glühen */
-      }
-
-      /* Pfeil, der nach links zum Grid zeigt */
-      .thought-bubble::before {
-        content: "";
-        position: absolute;
-        top: 20%; /* Vertikale Position des Pfeils anpassen */
-        left: -18px; /* Nach links positionieren */
-        border-width: 10px;
-        border-style: solid;
-        border-color: transparent #ddd transparent transparent;
-      }
-      .thought-bubble::after { /* Innerer Pfeil für den Hintergrund */
-        content: "";
-        position: absolute;
-        top: 20%;
-        left: -16px;
-        border-width: 9px;
-        border-style: solid;
-        border-color: transparent #f8f8f8 transparent transparent;
-      }
-
-      /* Media Query für kleinere Bildschirme / Mobilgeräte */
-      @media (max-width: 1024px) { /* Anpassung des Breakpoints für Layoutänderung */
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          user-select: none;
+          text-align: center;
+          font-size: 1.6vw;
+          transition: border 0.2s;
+          z-index: 10;
+          min-width: 0;
+          min-height: 0;
+        }
+  
+        .empty-app {
+          background: #e4e8ec !important;
+          border: 2px solid #bbb;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .app-box.empty-app:hover {
+          background: #cdd8df !important;
+        }
+        .symbol {
+          font-size: 2vw;
+          color: #555;
+        }
+        .fixation-screen {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: white;
+          font-size: 5vw;
+        }
+        .confirm-box {
+          position: absolute;
+          background-color: #fff;
+          color: #1976d2;
+          padding: 0.2vw 0.7vw;
+          border-radius: 8px;
+          font-size: 1vw;
+          cursor: pointer;
+          z-index: 20;
+          border: 2px solid  #1976d2;
+          font-weight: 500;
+          box-shadow: none;
+          font-family: inherit;
+          width: 4vw;
+          height: 2.2vw;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .highlight-target {
+          border: 4px solid #888 !important;
+          box-shadow: 0 0 12px #bbb !important;
+        }
+        /* NEUE CSS FÜR FEEDBACK */
+        .correct-feedback-highlight-green {
+          border: 4px solid #4CAF50 !important; /* Grüner Rand */
+          box-shadow: 0 0 15px rgba(76, 175, 80, 0.7) !important; /* Grüner Glanz */
+        }
+        .feedback-text-overlay {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 3vw; 
+          font-weight: bold;
+          padding: 0.5vw 1vw;
+          border-radius: 8px;
+          z-index: 100; /* Sicherstellen, dass es über allem anderen liegt */
+          text-align: center;
+          pointer-events: none; /* Sorgt dafür, dass Klicks durchgehen */
+          min-width: 100px; /* Mindestbreite, damit der Text gut sichtbar ist */
+        }
+        .feedback-text-overlay.correct {
+          color: #4CAF50; /* Grüner Text */
+          background-color: rgba(232, 245, 233, 0.9); /* Leicht grüner, halbtransparenter Hintergrund */
+        }
+        .feedback-text-overlay.incorrect {
+          color: #F44336; /* Roter Text */
+          background-color: rgba(255, 235, 238, 0.9); /* Leicht roter, halbtransparenter Hintergrund */
+        }
+        /* NEUE CSS FÜR DENKBLASEN-HIGHLIGHT */
+        .thought-bubble.highlight-red {
+            border: 4px solid #F44336 !important; /* Roter Rand, 4px für mehr Sichtbarkeit */
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.7) !important; /* Roter Glanz */
+        }
+        .thought-bubble.highlight-red::before {
+            border-color: transparent #F44336 transparent transparent; /* Roten Pfeilrand anpassen */
+        }
+        /* Der innere Pfeil muss nicht angepasst werden, da er den Hintergrund der Blase hat */
+  
+        /* NEUE CSS FÜR PRACTICE-BEREICH UND DENKBLASE */
         .practice-area {
-          flex-direction: column; /* Vertikal stapeln */
-          align-items: center; /* Elemente zentrieren */
-          overflow-y: auto; /* Scrollen für Inhalt erlauben */
-          padding-top: 15px; 
+          display: flex;
+          justify-content: center; /* Zentriert den gesamten Bereich */
+          align-items: flex-start; /* Oben ausrichten */
+          width: 100%;
+          /* Wichtig: Diese Höhe muss den gesamten verfügbaren Platz ausfüllen */
+          height: 100%; /* Lasst practice-area die volle Höhe des jspsych-containers nutzen */
+          box-sizing: border-box;
+          padding: 20px; /* Etwas Abstand um den Bereich */
+          overflow: hidden; /* Verhindert internes Scrollen */
+          min-height: 0; /* Ermöglicht der practice-area, bei Bedarf zu schrumpfen */
         }
+  
+        /* Anpassung des app-container innerhalb des practice-area */
+        /* Wichtig: Dies überschreibt die globale .app-container Regel nur für diesen Kontext */
         .practice-area .app-container {
-          width: 95%; /* Breiteres App-Grid */
-          height: auto; /* Automatische Höhe */
-          margin-right: 0;
-          margin-bottom: 20px; /* Abstand zwischen Grid und Denkblase */
+          width: 70%; /* Platz für die Denkblase lassen */
+          height: auto; /* Muss auto sein, damit es sich an den Inhalt anpasst */
+          min-height: 0; /* Ermöglicht dem app-container, bei Bedarf zu schrumpfen */
+          position: relative; 
+          flex-shrink: 0; /* Verhindert Schrumpfung (Standardverhalten im Zeilen-Layout) */
+          margin-right: 2vw; /* Abstand zwischen Grid und Denkblase */
+          display: flex; /* Flex-Container für app-grid */
+          flex-direction: column; /* Stapelt das app-grid vertikal */
+          justify-content: center; /* Zentriert das app-grid vertikal */
+          align-items: center; /* Zentriert das app-grid horizontal */
         }
+        /* Spezifische Regel für das app-grid innerhalb der practice-area */
+        .practice-area .app-container .app-grid {
+            flex-grow: 1; /* Ermöglicht dem Grid, verfügbaren Platz zu nutzen */
+            min-height: 0; /* Ermöglicht dem Grid, bei Bedarf zu schrumpfen */
+        }
+  
+  
         .thought-bubble {
-          max-width: 95%; /* Breitere Denkblase */
-          font-size: 16px;
-          padding: 15px;
-          margin-bottom: 20px; /* Abstand unter der Denkblase */
+          flex-grow: 1; /* Nimmt den restlichen Platz ein */
+          max-width: 25%; /* Begrenzt die maximale Breite */
+          background-color: #f8f8f8; /* Heller Hintergrund */
+          border: 1px solid #ddd;
+          border-radius: 12px;
+          padding: 1.2vw 1.5vw; /* Responsives Padding */
+          box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+          font-size: 1.1vw; /* Responsive Schriftgröße */
+          line-height: 1.5;
+          color: #333;
+          z-index: 50;
+          box-sizing: border-box;
+          text-align: left;
+          position: relative; /* Für den Pfeil */
+          transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Übergang für Glühen */
+          min-height: 0; /* Ermöglicht der Denkblase, bei Bedarf zu schrumpfen */
         }
-        .thought-bubble::before, .thought-bubble::after {
-          display: none; /* Pfeil auf kleinen Bildschirmen ausblenden */
+  
+        /* Pfeil, der nach links zum Grid zeigt */
+        .thought-bubble::before {
+          content: "";
+          position: absolute;
+          top: 20%; /* Vertikale Position des Pfeils anpassen */
+          left: -18px; /* Nach links positionieren */
+          border-width: 10px;
+          border-style: solid;
+          border-color: transparent #ddd transparent transparent;
         }
-      }
-
-      /* Standard-Anleitungstext unter dem Grid ausblenden, wenn die Denkblase angezeigt wird */
-      .practice-area .app-container + div[style*="margin-top:2em"] {
-          display: none; 
-      }
-
-    </style>
+        .thought-bubble::after { /* Innerer Pfeil für den Hintergrund */
+          content: "";
+          position: absolute;
+          top: 20%;
+          left: -16px;
+          border-width: 9px;
+          border-style: solid;
+          border-color: transparent #f8f8f8 transparent transparent;
+        }
+  
+        /* Media Query für kleinere Bildschirme / Tablets im Hochformat */
+        /* Wichtig: Diese Regeln gelten nur, wenn die Bildschirmbreite <= 1024px ist */
+        @media (max-width: 1024px) { 
+          /* --- Allgemeine mobile Anpassungen (können auch Haupttrials betreffen) --- */
+          .sap-overview { font-size: 26px; }
+          .confirm-box { font-size: 13px; width: 60px; height: 40px; }
+          .feedback-text-overlay { font-size: 26px; }
+  
+          /* --- Spezifische Anpassungen FÜR DIE PRACTICE AREA auf kleineren Bildschirmen --- */
+          .practice-area {
+            flex-direction: column; /* Vertikal stapeln */
+            align-items: center;    /* Elemente zentrieren */
+            padding: 8px 10px;      /* Reduziertes Padding für mehr Platz */
+            justify-content: flex-start; /* Elemente eher oben ausrichten */
+            height: auto;           /* Lässt die Höhe durch den Inhalt bestimmen */
+          }
+          
+          /* App-Container innerhalb der Practice Area */
+          .practice-area .app-container {
+            width: 95%;             /* Breiteres App-Grid */
+            height: auto;           /* Automatische Höhe */
+            margin-right: 0;
+            margin-bottom: 8px;     /* Abstand zwischen Grid und Denkblase reduzieren */
+            flex-grow: 1;           /* Erlaubt dem App-Container, den Raum zu nutzen */
+            flex-shrink: 1;         /* Erlaubt dem App-Container, bei Bedarf zu schrumpfen */
+          }
+  
+          /* App-Grid innerhalb des Practice App-Containers */
+          .practice-area .app-container .app-grid {
+            gap: 1.5vw;             /* Reduzierter Abstand zwischen App-Boxen */
+            padding: 0.5vw;         /* Reduzierter Innenabstand des Grids */
+          }
+  
+          /* App-Boxen innerhalb des Practice App-Containers */
+          .practice-area .app-container .app-box {
+            max-width: 80px;        /* Feste maximale Breite für kompaktere Apps */
+            font-size: 14px;        /* Kleinere Schriftgröße für App-Namen */
+            padding: 2px;           /* Inneres Padding der Box reduzieren */
+          }
+          .practice-area .app-container .app-box .symbol {
+            font-size: 18px;        /* Symbol auch kleiner */
+          }
+  
+          /* Denkblase innerhalb der Practice Area */
+          .thought-bubble {
+            max-width: 95%;         /* Breitere Denkblase */
+            font-size: 14px;        /* Schriftgröße reduzieren */
+            padding: 8px;           /* Padding reduzieren */
+            margin-bottom: 5px;     /* Abstand unter der Denkblase reduzieren */
+            flex-grow: 0;           /* Denkblase soll nicht unnötig wachsen */
+            flex-shrink: 1;         /* Denkblase soll bei Bedarf schrumpfen */
+          }
+          .thought-bubble::before, .thought-bubble::after {
+            display: none;          /* Pfeil auf kleinen Bildschirmen ausblenden */
+          }
+        }
+  
+        /* Zusätzliche Media Query für SEHR kleine Bildschirme (z.B. Smartphones im Hochformat) */
+        /* Wichtig: Diese Regeln gelten nur, wenn die Bildschirmbreite <= 704px ist */
+        @media (max-width: 704px) {
+          /* --- Allgemeine sehr mobile Anpassungen (können auch Haupttrials betreffen) --- */
+          .sap-overview { font-size: 22px; }
+          .confirm-box { font-size: 10px; width: 50px; height: 30px; }
+          .feedback-text-overlay { font-size: 22px; }
+  
+          /* --- Spezifische Anpassungen FÜR DIE PRACTICE AREA auf sehr kleinen Bildschirmen --- */
+          .practice-area {
+              padding: 5px 8px; /* Noch weiter reduziertes Padding */
+          }
+          .practice-area .app-container {
+              margin-bottom: 5px; /* Noch weiter reduzierter Abstand */
+          }
+          .practice-area .app-container .app-grid {
+              gap: 1vw; /* Noch kleinerer Abstand zwischen App-Boxen */
+              padding: 0.1vw; /* Minimales Padding */
+          }
+          .practice-area .app-container .app-box {
+              max-width: 65px; /* Noch kleinere App-Boxen */
+              font-size: 12px; /* Kleinere Schriftgröße */
+              padding: 1px;    /* Minimales Padding */
+          }
+          .practice-area .app-container .app-box .symbol {
+              font-size: 15px; /* Symbol auch kleiner */
+          }
+          .thought-bubble {
+              font-size: 12px; /* Kleinere Schriftgröße */
+              padding: 5px;    /* Reduziertes Padding */
+              margin-bottom: 2px; /* Minimaler Abstand */
+          }
+        }
+  
+        /* Standard-Anleitungstext unter dem Grid ausblenden, wenn die Denkblase angezeigt wird */
+        .practice-area .app-container + div[style*="margin-top:2em"] {
+            display: none; 
+        }
+        /* Hide the jspsych-prompt specifically when a practice-area is present */
+        /* Dies zielt auf den Prompt ab, der NACH dem Stimulus-Inhalt erscheint */
+        .jspsych-content .practice-area ~ .jspsych-prompt {
+            display: none !important;
+    }
+  
+      </style>
 </head>
 <body>
 <div id="sap-bg">
@@ -490,7 +557,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 20; 
+  const trialsPerBlock = 120; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -555,9 +622,10 @@
     stimulus: `
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
-        <p>Das Experiment wird ungefähr 30 Minuten dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
-        <p>Das Experiment sollte an einem Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur durchgeführt werden, 
-          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.</p>
+        <p>Das Experiment wird ungefähr <b>30 Minuten</b> dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
+        <p>Das Experiment sollte an einem <b>Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur</b< durchgeführt werden, 
+          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.
+          Für einen optimalen Ablauf sollten Sie außerdem sicherstellen, dass ihr Browser-Fenster sich im <b>Vollbildmodus</b> befindet.</p>
         <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
         <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
           immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
@@ -615,24 +683,15 @@
     const stimulus_html = `
       <div style="max-width: 800px; margin: 0 auto; text-align: left; font-size: 18px; line-height: 1.6;">
         <h2 style="text-align: center; font-size: 2.2em; margin-bottom: 25px;">${blockName}</h2>
-        <p>In diesem Block sehen Sie in mehreren Durchgängen ein Raster mit Apps. Ihre Aufgabe ist es, in jedem 
-          Durchgang die folgenden Schritte so schnell und genau wie möglich auszuführen:</p>
+        <p>Ihre Aufgabe ist es, in jedem Durchgang so schnell und genau wie möglich zu reagieren:</p>
         <ol style="margin: 20px 0 20px 20px; padding-left: 20px;">
-           <li style="margin-bottom: 15px;">Zu Beginn jeden Trials sehen Sie ungefähr in der Mitte Ihres Bildschirms
-            ein schwarzes Kreuz, bite fixieren Sie dieses Kreuz jeweils zu Beginn der Trials. Dadurch wird sichergestellt, 
-            dass Ihre Aufmerksamkeit an der richtigen Stelle ist.</li>
-          <li style="margin-bottom: 15px;">Prägen Sie sich die <b>Ziel-App</b> ein, die Ihnen zu Beginn und bei einem
-             Wechsel angezeigt wird.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_present} Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}
-            </b>, wenn Sie die Ziel-App entdecken.</li>
-          <li style="margin-bottom: 15px;">${step2_instruction_absent} Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}
-            </b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
-          <li style="margin-bottom: 15px;">In den meisten Fällen erscheint ein Feld "<b>Bestätigen</b>",
-            an einer zufälligen Stelle. Falls es erscheint, reagieren Sie darauf ebenfalls so schnell wie möglich mit 
-            der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> (es ist 
-            völlig egal, mit welcher).</li>
-            <li style="margin-bottom: 15px;">Manchmal wird das "Bestätigen"-Feld jedoch nicht erscheinen. In diesen Fällen dürfen Sie nicht mit einem Tastendruck
-            reagieren; die Trials sind dafür da, Ihre Aufmerksamkeit zu testen.</li>
+           <li style="margin-bottom: 15px;">Fixieren Sie das schwarze Kreuz zu Beginn jedes Trials.</li>
+          <li style="margin-bottom: 15px;">Merken Sie sich die aktuelle <b>Ziel-App</b>.</li>
+          <li style="margin-bottom: 15px;">${step2_instruction_present} ${step2_instruction_absent}
+            Drücken Sie <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> (gefunden) oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b> (nicht gefunden).</li>
+          <li style="margin-bottom: 15px;">Falls das Feld "<b>Bestätigen</b>" erscheint, reagieren Sie so schnell wie möglich 
+            mit <b>${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> (beliebige Taste).</li>
+            <li style="margin-bottom: 15px;">Erscheint das "Bestätigen"-Feld nicht, drücken Sie <b>keine</b> weitere Taste.</li>
         </ol>
         <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um fortzufahren.</p>
       </div>
@@ -704,6 +763,7 @@
         return html;
       },
       choices: 'NO_KEYS', 
+      prompt: '',
       data: { 
         trial_stage: 'search_task', 
         block_type: blockType, 
@@ -961,7 +1021,9 @@
         <div style="margin-top:2em; font-size:1.2vw; color:#333; display: none;"></div>
       `;
     },
+    
     choices: 'NO_KEYS', // <--- Wichtig: Hier weiterhin 'NO_KEYS' verwenden, da der Listener manuell hinzugefügt wird
+    prompt: '',
     data: {
       trial_stage: 'search_task',
       block_type: blockType,
@@ -1164,8 +1226,8 @@
             feststellen, dass sie nicht vorhanden ist.</li> 
           <li style="margin-bottom: 15px;"><b>Achtung:</b> Oft erscheint ein Feld mit "<b>Bestätigen</b>", auf das 
             Sie mit der <b>Taste ${KEY_TARGET_PRESENT.toUpperCase()} oder ${KEY_TARGET_ABSENT.toUpperCase()}</b> 
-            reagieren müssen. Manchmal wird das "Bestätigen"-Feld jedoch NICHT erscheinen. Der Trial endet dann nach
-             kurzer Zeit automatisch. Drücken Sie in diesem Fall KEINE weitere Taste.</li>
+            reagieren müssen. Manchmal wird das "Bestätigen"-Feld jedoch <b>NICHT</b> erscheinen. Der Trial endet dann nach
+             kurzer Zeit automatisch. Drücken Sie in diesem Fall <b>KEINE weitere Taste</b>.</li>
         </ol>
         <p style="text-align: center; margin-top: 30px;">Während der Übung werden Sie für jedes Szenario 
           (Ziel-App vorhanden/nicht vorhanden, Bestätigen-Feld erscheint/nicht erscheint) nochmal an der 
@@ -1548,16 +1610,36 @@
     1 
   );
 
-  // Bildschirm zwischen Block 1 und Block 2
-  const midBlockBreak = {
+   // Bildschirm zwischen Block 1 und Block 2
+   const midBlockBreak = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: () => {
       const nextBlockLabel = randomized_blocks[1].label; // Label des kommenden zweiten Blocks
+      // Dies ist die Variable, die Sie oben definiert haben und die wir verwenden werden
+      const isNextBlockHighlightFree = !randomized_blocks[1].highlight; // Prüfen, ob der nächste Block KEIN Highlight hat
+
+      let additionalInfo = '';
+      // Korrektur: Verwenden Sie 'isNextBlockHighlightFree' hier
+      if (isNextBlockHighlightFree) { // Wenn der nächste Block KEIN Highlight hat (Test-Block)
+        additionalInfo = `
+          <p style="color: #d32f2f; font-weight: bold; margin-top: 20px;">
+            Achtung: Im folgenden Block wird die Ziel-App nicht mehr grau umrahmt sein!
+          </p>
+        `;
+      } else { // Wenn der nächste Block ein Highlight hat (Baseline-Block)
+        additionalInfo = `
+          <p style="color: #1a6d91; font-weight: bold; margin-top: 20px;">
+            Hinweis: Im folgenden Block wird die Ziel-App zur Orientierung stets grau umrahmt sein.
+          </p>
+        `;
+      }
+
       return `
         <div style="max-width: 900px; margin: 0 auto; text-align: center;">
           <h2>Block 1 ist abgeschlossen!</h2>
           <p>Sie haben den ersten Teil des Experiments erfolgreich beendet.</p>
-          <p>Es folgt nun der zweite und letzte Block: <b>${nextBlockLabel}</b>.</p>
+          <p>Es folgt nun der zweite und letzte Block.</p>
+          ${additionalInfo} <!-- Hier wird die zusätzliche Info eingefügt -->
           <p>Die Regeln bleiben dieselben:</p>
           <ul style="max-width: 600px; margin: 20px auto 20px auto; text-align: left; padding-left: 20px;">
               <li>Finden Sie die Ziel-App (oder stellen Sie fest, dass sie fehlt) und drücken Sie <b>${KEY_TARGET_PRESENT.toUpperCase()}</b> oder <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>.</li>
@@ -1575,6 +1657,7 @@
     on_finish: () => showSAPBackground(true),
     data: { trial_stage: 'inter_block_break', block_type: 'Block-Übergang' }
   };
+
 
 
   const secondBlock = makeBlockTrials(
