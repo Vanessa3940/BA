@@ -433,6 +433,10 @@
             display: none !important;
         } */
       </style>
+
+  <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.1"></script> 
+
+
 </head>
 <body>
 <div id="sap-bg">
@@ -536,21 +540,32 @@
   const jsPsych = initJsPsych({
     display_element: 'jspsych-container',
     on_finish: function() {
-        // Daten als CSV herunterladen
-        jsPsych.data.get().localSave('csv', 'sap_app_task_data.csv', {
-            exclude_columns: ['timeout', 'failed_images', 'failed_video', 'failed_audio']
-        });
+        let all_trials = jsPsych.data.get().values();
+        let data_to_send = [];
 
-        // Optional: Eine "Danke"-Nachricht anzeigen, damit der Teilnehmer weiß, dass das Experiment beendet ist.
+        // Gehe alle Trials durch und füge nur die Daten hinzu, die eine 'block_num' haben
+        // (dies filtert automatisch preload, initiale anweisungen, Danke-Nachricht etc. heraus)
+        for (const trial of all_trials) {
+            // Stellen Sie sicher, dass das trial.data Objekt existiert und block_num definiert ist
+            if (trial.data && typeof trial.data.block_num !== 'undefined' && trial.data.block_num !== -1) {
+                data_to_send.push(trial.data);
+            }
+        }
+        
+        // Zeige die "Vielen Dank"-Nachricht an
         document.getElementById('jspsych-container').innerHTML = `
             <div style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 100px;">
                 <h2>Vielen Dank für Ihre Teilnahme!</h2>
-                <p>Ihre Daten wurden automatisch gespeichert.</p>
-                <p>Sie können das Fenstern nun schließen.</p>
+                <p>Ihre Daten wurden erfolgreich gespeichert.</p>
+                <p>Sie können das Fenster nun schließen.</p>
             </div>
         `;
-        // Stellen Sie sicher, dass der SAP-Hintergrund für die Danke-Nachricht ausgeblendet ist
-        showSAPBackground(false);
+        showSAPBackground(false); // Sicherstellen, dass der Hintergrund für die Danke-Nachricht ausgeblendet ist
+
+        // Sende die gesammelten Daten als JSON-String an das Elternfenster (SoSci Survey)
+        // Der zweite Parameter '*' bedeutet, dass die Nachricht an jedes Fenster gesendet werden kann.
+        // Dies ist in Umfragekontexten oft akzeptabel.
+        window.parent.postMessage(JSON.stringify(data_to_send), '*');
     }
   });
 
@@ -1668,9 +1683,45 @@
     2 
   );
   
-  const timeline = [preload, startPage, ...firstBlock, midBlockBreak, ...secondBlock];
+  const timeline = [
+    // Schritt 1: Setze eine initiale block_num auf -1 für Trials ohne spezifische Blockzuordnung
+    // (z.B. Preload, Startseite, globale Anweisungen)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: -1}),
+        data: { trial_stage: 'sosci_block_init', block_num: -1 }
+    },
+    preload,
+    startPage,
 
-  jsPsych.run(timeline);
+    // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: 0}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
+    },
+    ...firstBlock,
+
+    // Schritt 3: Setze block_num für den Übergang zwischen Blöcken auf -1 (oder einen anderen Marker)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: -1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: -1 }
+    },
+    midBlockBreak,
+
+    // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: 1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
+    },
+    ...secondBlock
+];
+
+jsPsych.run(timeline);
+
+
 </script>
 </body>
 </html>
