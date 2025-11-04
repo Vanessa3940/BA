@@ -479,6 +479,29 @@
   setVhProperty();
   window.addEventListener('resize', setVhProperty);
 
+  
+
+  // --- NEU HINZUFÜGEN: Globaler Event Listener, um das Scrollen mit der Leertaste zu verhindern ---
+  document.addEventListener('keydown', function(e) {
+    // Prüft, ob die gedrückte Taste die Leertaste ist (' ')
+    if (e.key === ' ') {
+      // Prüft, ob das aktuell fokussierte Element KEIN Eingabefeld (input oder textarea) ist.
+      // Das ist wichtig, damit die Leertaste in einem Textfeld im Experiment weiterhin funktioniert.
+      const focusedElement = document.activeElement;
+      const isInput = focusedElement.tagName === 'INPUT' || focusedElement.tagName === 'TEXTAREA';
+
+      // Wenn die Leertaste gedrückt wird und kein Eingabefeld fokussiert ist,
+      // verhindern wir das Standardverhalten des Browsers (Scrollen).
+      if (!isInput) {
+        e.preventDefault();
+      }
+    }
+  }, true); // 'true' hier bedeutet, dass der Event-Handler in der Capture-Phase ausgeführt wird,
+            // also frühzeitig, bevor der Browser sein Standardverhalten ausführt.
+
+  
+
+
 
   // ==== KONSTANTEN FÜR REAKTIONSTASTEN ====
   const KEY_TARGET_PRESENT = 'j';
