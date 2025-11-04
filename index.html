@@ -563,18 +563,20 @@
   const jsPsych = initJsPsych({
     display_element: 'jspsych-container',
     on_finish: function() {
-        let all_trials = jsPsych.data.get().values();
-        let data_to_send = [];
-
-        // Gehe alle Trials durch und füge nur die Daten hinzu, die eine 'block_num' haben
-        // (dies filtert automatisch preload, initiale anweisungen, Danke-Nachricht etc. heraus)
-        for (const trial of all_trials) {
-            // Stellen Sie sicher, dass das trial.data Objekt existiert und block_num definiert ist
-            if (trial.data && typeof trial.data.block_num !== 'undefined' && trial.data.block_num !== -1) {
-                data_to_send.push(trial.data);
-            }
-        }
+        // 1. Sammle alle Trial-Objekte, die von jsPsych erfasst wurden.
+        let all_trials_raw = jsPsych.data.get().values();
         
+        // 2. Filter und mappe die Daten, um nur die 'data'-Eigenschaft der relevanten Trials zu erhalten.
+        //    - Nur Trials, die ein 'data'-Objekt haben.
+        //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
+        //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
+        let data_to_send = all_trials_raw
+            .filter(trial => trial.data && typeof trial.data.block_num !== 'undefined' && trial.data.block_num !== -1)
+            .map(trial => trial.data); // Extrahiere nur das 'data'-Objekt aus jedem gefilterten Trial.
+
+        // Korrektur der 'Smart Quotes' im console.log
+        console.log('data_to_send (anzahl):', data_to_send.length, data_to_send.slice(0,3));
+
         // Zeige die "Vielen Dank"-Nachricht an
         document.getElementById('jspsych-container').innerHTML = `
             <div style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 100px;">
