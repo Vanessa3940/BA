@@ -654,7 +654,7 @@
   };
 
   const startPage = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
@@ -665,10 +665,10 @@
         <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
         <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
           immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
-        <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um zu beginnen.</p>
+        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf "Experiment starten", um zu beginnen.</p>
       </div>
     `,
-    choices: [' '],
+    choices: ['Experiment starten'],
     css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true),
