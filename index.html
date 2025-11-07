@@ -1722,8 +1722,8 @@
     // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 0}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
+        func: () => jsPsych.data.addProperties({block_num: 1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
     },
     ...firstBlock,
 
@@ -1738,8 +1738,8 @@
     // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 1}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
+        func: () => jsPsych.data.addProperties({block_num: 2}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 2 }
     },
     ...secondBlock
 ];
