@@ -433,6 +433,10 @@
             display: none !important;
         } */
       </style>
+
+  <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.1"></script> 
+
+
 </head>
 <body>
 <div id="sap-bg">
@@ -474,6 +478,29 @@
   // Setzen beim Laden und bei Größenänderung (z.B. Orientierungswechsel auf Tablets)
   setVhProperty();
   window.addEventListener('resize', setVhProperty);
+
+  
+
+  // --- NEU HINZUFÜGEN: Globaler Event Listener, um das Scrollen mit der Leertaste zu verhindern ---
+  document.addEventListener('keydown', function(e) {
+    // Prüft, ob die gedrückte Taste die Leertaste ist (' ')
+    if (e.key === ' ') {
+      // Prüft, ob das aktuell fokussierte Element KEIN Eingabefeld (input oder textarea) ist.
+      // Das ist wichtig, damit die Leertaste in einem Textfeld im Experiment weiterhin funktioniert.
+      const focusedElement = document.activeElement;
+      const isInput = focusedElement.tagName === 'INPUT' || focusedElement.tagName === 'TEXTAREA';
+
+      // Wenn die Leertaste gedrückt wird und kein Eingabefeld fokussiert ist,
+      // verhindern wir das Standardverhalten des Browsers (Scrollen).
+      if (!isInput) {
+        e.preventDefault();
+      }
+    }
+  }, true); // 'true' hier bedeutet, dass der Event-Handler in der Capture-Phase ausgeführt wird,
+            // also frühzeitig, bevor der Browser sein Standardverhalten ausführt.
+
+  
+
 
 
   // ==== KONSTANTEN FÜR REAKTIONSTASTEN ====
@@ -536,26 +563,39 @@
   const jsPsych = initJsPsych({
     display_element: 'jspsych-container',
     on_finish: function() {
-        // Daten als CSV herunterladen
-        jsPsych.data.get().localSave('csv', 'sap_app_task_data.csv', {
-            exclude_columns: ['timeout', 'failed_images', 'failed_video', 'failed_audio']
-        });
+        // 1. Sammle alle Trial-Objekte, die von jsPsych erfasst wurden.
+        let all_trials_raw = jsPsych.data.get().values();
+        
+        // 2. Filter und mappe die Daten, um nur die 'data'-Eigenschaft der relevanten Trials zu erhalten.
+        //    - Nur Trials, die ein 'data'-Objekt haben.
+        //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
+        //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
+        let data_to_send = all_trials_raw
+            .filter(trial => trial.data && typeof trial.data.block_num !== 'undefined' && trial.data.block_num !== -1)
+            .map(trial => trial.data); // Extrahiere nur das 'data'-Objekt aus jedem gefilterten Trial.
 
-        // Optional: Eine "Danke"-Nachricht anzeigen, damit der Teilnehmer weiß, dass das Experiment beendet ist.
+        // Korrektur der 'Smart Quotes' im console.log
+        console.log('data_to_send (anzahl):', data_to_send.length, data_to_send.slice(0,3));
+
+        // Zeige die "Vielen Dank"-Nachricht an
         document.getElementById('jspsych-container').innerHTML = `
             <div style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 100px;">
                 <h2>Vielen Dank für Ihre Teilnahme!</h2>
-                <p>Ihre Daten wurden automatisch gespeichert.</p>
-                <p>Sie können das Fenstern nun schließen.</p>
+                <p>Ihre Daten wurden erfolgreich gespeichert.</p>
+                <p>Sie können das Fenster nun schließen.</p>
             </div>
         `;
-        // Stellen Sie sicher, dass der SAP-Hintergrund für die Danke-Nachricht ausgeblendet ist
-        showSAPBackground(false);
+        showSAPBackground(false); // Sicherstellen, dass der Hintergrund für die Danke-Nachricht ausgeblendet ist
+
+        // Sende die gesammelten Daten als JSON-String an das Elternfenster (SoSci Survey)
+        // Der zweite Parameter '*' bedeutet, dass die Nachricht an jedes Fenster gesendet werden kann.
+        // Dies ist in Umfragekontexten oft akzeptabel.
+        window.parent.postMessage(JSON.stringify(data_to_send), '*');
     }
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 120; 
+  const trialsPerBlock = 4; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -616,7 +656,7 @@
   };
 
   const startPage = {
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: `
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
@@ -627,10 +667,10 @@
         <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
         <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
           immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
-        <p style="text-align: center; margin-top: 30px;">Drücken Sie die <b>Leertaste</b>, um zu beginnen.</p>
+        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf "Experiment starten", um zu beginnen.</p>
       </div>
     `,
-    choices: [' '],
+    choices: ['Experiment starten'],
     css_classes: ['vertically-centered-content'],
     on_load: () => showSAPBackground(false),
     on_finish: () => showSAPBackground(true),
@@ -1668,9 +1708,45 @@
     2 
   );
   
-  const timeline = [preload, startPage, ...firstBlock, midBlockBreak, ...secondBlock];
+  const timeline = [
+    // Schritt 1: Setze eine initiale block_num auf -1 für Trials ohne spezifische Blockzuordnung
+    // (z.B. Preload, Startseite, globale Anweisungen)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: -1}),
+        data: { trial_stage: 'sosci_block_init', block_num: -1 }
+    },
+    preload,
+    startPage,
 
-  jsPsych.run(timeline);
+    // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: 0}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
+    },
+    ...firstBlock,
+
+    // Schritt 3: Setze block_num für den Übergang zwischen Blöcken auf -1 (oder einen anderen Marker)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: -1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: -1 }
+    },
+    midBlockBreak,
+
+    // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
+    {
+        type: jsPsychCallFunction,
+        func: () => jsPsych.data.addProperties({block_num: 1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
+    },
+    ...secondBlock
+];
+
+jsPsych.run(timeline);
+
+
 </script>
 </body>
 </html>
