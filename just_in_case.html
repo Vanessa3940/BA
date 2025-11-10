@@ -609,7 +609,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 4; 
+  const trialsPerBlock = 60; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -1373,6 +1373,7 @@
 
   function makeBlockTrials(highlight, blockLabel, trialConditionsArr, blockOrderNumber) { 
     const block = [];
+    const currentBlockNum = blockOrderNumber; // Lokale Blocknummer für alle Trials dieses Blocks
     
     const displayBlockName = `Block ${blockOrderNumber}`;
     block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
@@ -1443,6 +1444,12 @@
         currentCondition.isTargetPresent 
       ));
     }
+
+    // Alle Trials dieses Blocks mit block_num markieren
+    block.forEach(trial => {
+      if (!trial.data) trial.data = {};
+      trial.data.block_num = currentBlockNum;
+    });
     return block;
   }
 
@@ -1723,39 +1730,18 @@
   );
   
   const timeline = [
-    // Schritt 1: Setze eine initiale block_num auf -1 für Trials ohne spezifische Blockzuordnung
-    // (z.B. Preload, Startseite, globale Anweisungen)
-    {
-        type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: -1}),
-        data: { trial_stage: 'sosci_block_init', block_num: -1 }
-    },
-    preload,
-    startPage,
+  // Schritt 1: Preload + Startseite (haben kein Blocknummern-Konzept)
+  preload,
+  startPage,
 
-    // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
-    {
-        type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 0}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
-    },
-    ...firstBlock,
-    
-    // Schritt 3: Setze block_num für den Übergang zwischen Blöcken auf -1 (oder einen anderen Marker)
-    {
-        type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: -1}),
-        data: { trial_stage: 'sosci_block_assign', block_num: -1 }
-    },
-    midBlockBreak,
+  // Schritt 2: Erster Block (block_num = 0)
+  ...makeBlockTrials(true, 'Experiment', block1Conditions, 0),
 
-    // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
-    {
-        type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 1}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
-    },
-    ...secondBlock
+  // Schritt 3: Pause / Übergang
+  midBlockBreak,
+
+  // Schritt 4: Zweiter Block (block_num = 1)
+  ...makeBlockTrials(false, 'Experiment', block2Conditions, 1)
 ];
 
 jsPsych.run(timeline);
