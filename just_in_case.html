@@ -575,7 +575,14 @@
             rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
             block_type: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
-            response: trial.response ?? null
+            is_target_present: trial.is_target_present ?? null,
+            response_key_search: trial.response_key_search ?? null,
+            response_key_confirm: trial.response_key_confirm ?? null,
+            is_response_correct_search: trial.is_response_correct_search ?? null,
+            probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
+            rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
+            accidental_keypress_no_probe: trial.accidental_keypress_no_probe ?? null
+
           })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
         ;
 

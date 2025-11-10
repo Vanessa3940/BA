@@ -575,7 +575,7 @@
             rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
             block_type: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
-            response: trial.response ?? null,
+            is_target_present: trial.is_target_present ?? null,
             response_key_search: trial.response_key_search ?? null,
             response_key_confirm: trial.response_key_confirm ?? null,
             is_response_correct_search: trial.is_response_correct_search ?? null,
@@ -583,7 +583,7 @@
             rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
             accidental_keypress_no_probe: trial.accidental_keypress_no_probe ?? null
 
-          })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
+          })).filter(trial => trial.block_num == 1 || trial.block_num == 2)
         ;
 
           
@@ -1736,8 +1736,8 @@
     // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 0}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
+        func: () => jsPsych.data.addProperties({block_num: 1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
     },
     ...firstBlock,
     
@@ -1752,8 +1752,8 @@
     // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 1}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
+        func: () => jsPsych.data.addProperties({block_num: 2}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 2 }
     },
     ...secondBlock
 ];
