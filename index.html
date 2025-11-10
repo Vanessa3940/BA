@@ -571,13 +571,10 @@
         //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
         //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
         let data_to_send = all_trials_raw.trials.map(trial => ({
-          jspsych_trial_index: trial.trial_index ?? null,
-            rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
             block_type: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
+            rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
             is_target_present: trial.is_target_present ?? null,
-            response_key_search: trial.response_key_search ?? null,
-            response_key_confirm: trial.response_key_confirm ?? null,
             is_response_correct_search: trial.is_response_correct_search ?? null,
             probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
             rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
