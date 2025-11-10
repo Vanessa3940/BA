@@ -583,7 +583,7 @@
             rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
             accidental_keypress_no_probe: trial.accidental_keypress_no_probe ?? null
 
-          })).filter(trial => trial.block_num == 1 || trial.block_num == 2)
+          })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
         ;
 
           
@@ -1736,8 +1736,8 @@
     // Schritt 2: Setze block_num auf 0 für den ersten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 1}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
+        func: () => jsPsych.data.addProperties({block_num: 0}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 0 }
     },
     ...firstBlock,
     
@@ -1752,8 +1752,8 @@
     // Schritt 4: Setze block_num auf 1 für den zweiten experimentellen Block (inkl. Übung)
     {
         type: jsPsychCallFunction,
-        func: () => jsPsych.data.addProperties({block_num: 2}),
-        data: { trial_stage: 'sosci_block_assign', block_num: 2 }
+        func: () => jsPsych.data.addProperties({block_num: 1}),
+        data: { trial_stage: 'sosci_block_assign', block_num: 1 }
     },
     ...secondBlock
 ];
