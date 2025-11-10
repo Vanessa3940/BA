@@ -609,7 +609,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 140; 
+  const trialsPerBlock = 4; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -1659,8 +1659,8 @@
 
   // === Timeline ===
   const block_definitions = [
-    { highlight: false, label: "Test-Block", conditions: block1Conditions }, 
-    { highlight: true, label: "Baseline-Block", conditions: block2Conditions } 
+    { highlight: false, label: "Test", conditions: block1Conditions }, 
+    { highlight: true, label: "Baseline", conditions: block2Conditions } 
   ];
 
   const randomized_blocks = jsPsych.randomization.shuffle(block_definitions);
@@ -1735,13 +1735,13 @@
   startPage,
 
   // Schritt 2: Erster Block (block_num = 0)
-  ...makeBlockTrials(true, 'Experiment', block1Conditions, 0),
+  ...makeBlockTrials(randomized_blocks[0].highlight, randomized_blocks[0].label, block1Conditions, 0),
 
   // Schritt 3: Pause / Übergang
   midBlockBreak,
 
   // Schritt 4: Zweiter Block (block_num = 1)
-  ...makeBlockTrials(false, 'Experiment', block2Conditions, 1)
+  ...makeBlockTrials(randomized_blocks[1].highlight, randomized_blocks[1].label, block2Conditions, 1)
 ];
 
 jsPsych.run(timeline);
