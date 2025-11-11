@@ -571,12 +571,12 @@
         //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
         //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
         let data_to_send = all_trials_raw.trials.map(trial => ({
-            b_type: trial.block_type ?? null,
-            b_num: trial.block_num ?? null,
+            block_type: trial.block_type ?? null,
+            block_num: trial.block_num ?? null,
             rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
-            tar_pres: trial.is_target_present ?? null,
+            target_present: trial.is_target_present ?? null,
             cor_resp: trial.is_response_correct_search ?? null,
-            p_type: trial.probe_type ?? trial.probe_type_practice ?? null,
+            probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
             rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
             key_no_p: trial.accidental_keypress_no_probe ?? null
 
