@@ -513,7 +513,7 @@
   const CONFIRM_BUTTON_DELAY_MS = 60;
   // NEUE KONSTANTE FÜR FEEDBACK-DAUER IN ÜBUNGSRUNDEN
   const FEEDBACK_DURATION_MS = 700; 
-  // NEUE KONSTANTE FÜR LÄNGERES FEEDBACK BEI FEHLERN IM NO-PROBE TRIAL DER ÜBUNG
+  // NEUE KONSTANTE FÜR LÄNGERES FEEDBACK BEI FEHLERN IM no_p TRIAL DER ÜBUNG
   const NO_PROBE_ERROR_FEEDBACK_DURATION_MS = 2000;
 
 
@@ -573,12 +573,12 @@
         let data_to_send = all_trials_raw.trials.map(trial => ({
             b_t: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
-            rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
-            target_present: trial.is_target_present ?? null,
-            correct_response: trial.is_response_correct_search ?? null,
-            probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
-            rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
-            key_no_probe: trial.accidental_keypress_no_probe ?? null
+            rt_sel: trial.rt_select != null ? Math.round(trial.rt_select) : null,
+            tar_pres: trial.is_target_present ?? null,
+            cor_resp: trial.is_response_correct_search ?? null,
+            p_type: trial.probe_type ?? trial.probe_type_practice ?? null,
+            rt_con: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
+            key_no_p: trial.accidental_keypress_no_probe ?? null
 
           })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
         ;
@@ -614,9 +614,9 @@
       const targetAbsentCount = numTrials / 2;  // 60
 
       const probeDistribution = {
-          'on-probe': 0.40, // 40%
-          'off-probe': 0.40, // 40%
-          'no-probe': 0.20  // 20%
+          'on_p': 0.40, // 40%
+          'off_p': 0.40, // 40%
+          'no_p': 0.20  // 20%
       };
 
       const addConditions = (isTargetPresent, count) => {
@@ -851,8 +851,8 @@
         });
 
         let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
-        let accidentalKeyPressListener = null; // Deklariert für Hauptblock `no-probe` Logik
-        let noProbeTimeout = null; // Deklariert für Hauptblock `no-probe` Logik
+        let accidentalKeyPressListener = null; // Deklariert für Hauptblock `no_p` Logik
+        let noProbeTimeout = null; // Deklariert für Hauptblock `no_p` Logik
 
 
         currentKeyListener = (e) => { // Definition des Listeners
@@ -887,12 +887,12 @@
               document.removeEventListener('keydown', currentKeyListener, true);
               currentKeyListener = null; // Referenz löschen
 
-              // --- NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
-              if (currentTrialProbeType === 'no-probe') {
+              // --- NEUE LOGIK FÜR no_p TRIALS IM HAUPTBLOCK ---
+              if (currentTrialProbeType === 'no_p') {
                   const startTimeForNoProbeWait = performance.now();
                   const noProbeWaitDuration = 1500; // 2 Sekunden
 
-                  let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no-probe Handler
+                  let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no_p Handler
 
                   accidentalKeyPressListener = (e_accidental) => {
                       const pressedKeyAccidental = e_accidental.key.toLowerCase();
@@ -935,7 +935,7 @@
                       }
                   }, noProbeWaitDuration); // Warte 1.5s
               } 
-              // --- ENDE NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
+              // --- ENDE NEUE LOGIK FÜR no_p TRIALS IM HAUPTBLOCK ---
               else {
                   setTimeout(() => showConfirmButton((confirmData) => { 
                     const confirmPosition = window.confirmPosition; 
@@ -969,15 +969,15 @@
   // ==== PRACTICE TRIAL ====
   // Definiere die Konfigurationen für die Übungstrials
   const practiceTrialConfigurations = [
-      { isTargetPresent: true, probeType: 'on-probe' },
-      { isTargetPresent: false, probeType: 'on-probe' },
-      { isTargetPresent: true, probeType: 'off-probe' },
-      { isTargetPresent: false, probeType: 'off-probe' },
-      { isTargetPresent: true, probeType: 'no-probe' },
-      { isTargetPresent: false, probeType: 'no-probe' },
+      { isTargetPresent: true, probeType: 'on_p' },
+      { isTargetPresent: false, probeType: 'on_p' },
+      { isTargetPresent: true, probeType: 'off_p' },
+      { isTargetPresent: false, probeType: 'off_p' },
+      { isTargetPresent: true, probeType: 'no_p' },
+      { isTargetPresent: false, probeType: 'no_p' },
       // Optional: Wiederhole einige Typen für zusätzliche Übung
-      { isTargetPresent: true, probeType: 'on-probe' }, 
-      { isTargetPresent: false, probeType: 'off-probe' } 
+      { isTargetPresent: true, probeType: 'on_p' }, 
+      { isTargetPresent: false, probeType: 'off_p' } 
   ];
   const totalPracticeTrials = practiceTrialConfigurations.length; 
 
@@ -1047,7 +1047,7 @@
           : `du festgestellt hast, dass die Ziel-App nicht im Raster ist. Drücke die Taste ${keyAbsentText}.`;
 
         let confirmInstruction;
-        if (probeType === 'no-probe') {
+        if (probeType === 'no_p') {
             confirmInstruction = `<p><b>Wichtig:</b> In diesem Trial wird <b>kein</b> "Bestätigen"-Feld erscheinen. Der Trial endet automatisch nach deiner ersten Reaktion. Merke dir: danach KEINE Taste drücken, das Raster bleibt noch 1.5s sichtbar!</p>`;
         } else {
             confirmInstruction = `<p>Danach erscheint das "Bestätigen"-Feld, auf das du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>`;
@@ -1103,8 +1103,8 @@
 
       // --- HIER WIRD DIE DENKBLASE ROT HERVORGEHOBEN ---
       const thoughtBubbleEl = document.querySelector('.thought-bubble');
-      // Highlight: erster Trial, zweiter Trial, oder wenn probeType 'no-probe' ist
-      if (thoughtBubbleEl && (trialNum === 1 || trialNum === 2 || probeType === 'no-probe')) {
+      // Highlight: erster Trial, zweiter Trial, oder wenn probeType 'no_p' ist
+      if (thoughtBubbleEl && (trialNum === 1 || trialNum === 2 || probeType === 'no_p')) {
           thoughtBubbleEl.classList.add('highlight-red');
           setTimeout(() => {
               thoughtBubbleEl.classList.remove('highlight-red');
@@ -1173,8 +1173,8 @@
                     targetAppElement.classList.remove('correct-feedback-highlight-green');
                 }
                 
-                if (probeType === 'no-probe') {
-                    // Logik für no-probe Übungstrials: zusätzliche Reaktionen abfangen
+                if (probeType === 'no_p') {
+                    // Logik für no_p Übungstrials: zusätzliche Reaktionen abfangen
                     let accidentalKeyPressListener = null;
                     const startTimeForNoProbeWait = performance.now();
                     const noProbeWaitDuration = 1500; // 1.5 Sekunden
@@ -1234,7 +1234,7 @@
                     }, noProbeWaitDuration); // Warte 1.5s
 
                 } else {
-                    // Standardfall für on-probe und off-probe: Bestätigen-Button anzeigen
+                    // Standardfall für on_p und off_p: Bestätigen-Button anzeigen
                     setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, probeType), CONFIRM_BUTTON_DELAY_MS);
                 }
             }, FEEDBACK_DURATION_MS);
@@ -1464,7 +1464,7 @@
 
 
   const showConfirmButton = (callback, isPractice = false, probeType = null) => {
-  if (probeType === 'no-probe') {
+  if (probeType === 'no_p') {
     callback({
       rt_confirm: null,
       response_key_confirm: null,
@@ -1512,10 +1512,10 @@
 
   // probeType sicherstellen
   if (isPractice && !probeType) {
-    probeType = 'on-probe'; 
+    probeType = 'on_p'; 
   } else if (!isPractice && !probeType) {
-    console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off-probe'.");
-    probeType = 'off-probe';
+    console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off_p'.");
+    probeType = 'off_p';
   }
 
   let confirmX = leftBoundary; // Initialisierung
@@ -1561,7 +1561,7 @@
     }
 
 
-    if (probeType === 'on-probe') {
+    if (probeType === 'on_p') {
       let hasSufficientOverlapWithNonTarget = false;
       for (const rect of nonTargetRects) {
         const overlap = getOverlapArea(currentConfirmRect, rect);
@@ -1579,7 +1579,7 @@
 
       if (hasSufficientOverlapWithNonTarget && !overlapsTarget && !hasOverlapWithThoughtBubble) found = true;
     } else {
-      // off-probe: keine Überlappung und nicht zu nah an Apps
+      // off_p: keine Überlappung und nicht zu nah an Apps
       let anyOverlap = false;
       let tooCloseToApps = false;
       for (const rect of rects) {
