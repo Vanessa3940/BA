@@ -571,15 +571,14 @@
         //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
         //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
         let data_to_send = all_trials_raw.trials.map(trial => ({
-            jspsych_trial_index: trial.trial_index ?? null,
             block_type: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
             rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
-            is_target_present: trial.is_target_present ?? null,
-            is_response_correct_search: trial.is_response_correct_search ?? null,
+            target_present: trial.is_target_present ?? null,
+            correct_response: trial.is_response_correct_search ?? null,
             probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
             rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
-            accidental_keypress_no_probe: trial.accidental_keypress_no_probe ?? null
+            key_no_probe: trial.accidental_keypress_no_probe ?? null
 
           })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
         ;
@@ -607,7 +606,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 4; 
+  const trialsPerBlock = 120; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -1569,7 +1568,7 @@
       let hasSufficientOverlapWithNonTarget = false;
       for (const rect of nonTargetRects) {
         const overlap = getOverlapArea(currentConfirmRect, rect);
-        if (overlap / buttonArea >= 0.75) {
+        if (overlap / buttonArea >= 1.0) {
           hasSufficientOverlapWithNonTarget = true;
           break;
         }
@@ -1657,8 +1656,8 @@
 
   // === Timeline ===
   const block_definitions = [
-    { highlight: false, label: "Test", conditions: block1Conditions }, 
-    { highlight: true, label: "Baseline", conditions: block2Conditions } 
+    { highlight: false, label: "T", conditions: block1Conditions }, 
+    { highlight: true, label: "B", conditions: block2Conditions } 
   ];
 
   const randomized_blocks = jsPsych.randomization.shuffle(block_definitions);

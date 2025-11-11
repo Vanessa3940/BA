@@ -606,7 +606,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 120; 
+  const trialsPerBlock = 10; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -1368,87 +1368,84 @@
   // Der globalDistractorPool enthält alle App-Namen, die NIEMALS Ziel-Apps sein werden (weder jetzt noch später)
   const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
 
-  function makeBlockTrials(highlight, blockLabel, trialConditionsArr, blockOrderNumber) { 
+  function makeBlockTrials(highlight, blockLabel, trialConditionsArr, internalBlockNum, displayBlockNum) {
     const block = [];
-    const currentBlockNum = blockOrderNumber; // Lokale Blocknummer für alle Trials dieses Blocks
-    
-    const displayBlockName = `Block ${blockOrderNumber}`;
-    block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
-    
-    // makePracticeBlock wird nun mit dem displayBlockName aufgerufen
+
+    // Der displayBlockNum wird für die Anzeige an den Benutzer verwendet
+    const displayBlockName = `Block ${displayBlockNum}`;
+
+    // Der internalBlockNum wird weiterhin für die Datenspeicherung verwendet
+    // const currentBlockNum = blockOrderNumber; // Diese Zeile entfernen oder auskommentieren
+
+    block.push(getInstructions(displayBlockName, highlight, blockLabel));
+
+    // makePracticeBlock nutzt nun auch displayBlockName
     block.push(...makePracticeBlock(highlight, displayBlockName));
 
-
     let targetsForThisBlockNames;
-    // GEÄNDERT: Nun 6 Targets pro Block, um eine volle Rotation (120 Trials / 20 Trials pro Target = 6 Targets) zu ermöglichen
-    if (blockOrderNumber === 1) {
-        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 6); // Die ersten 6 der 12 Targets
-    } else { 
-        targetsForThisBlockNames = allExperimentTargetNames.slice(6, 12); // Die nächsten 6 der 12 Targets
+    // Die Logik zur Auswahl der Ziel-Apps sollte weiterhin vom internalBlockNum (0 oder 1) abhängen,
+    // da dies die tatsächliche Reihenfolge der Blöcke repräsentiert.
+    if (internalBlockNum === 0) { // Dies ist der erste Block im Experiment (intern 0)
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 6);
+    } else { // Dies ist der zweite Block im Experiment (intern 1)
+        targetsForThisBlockNames = allExperimentTargetNames.slice(6, 12);
     }
-    
-    const blockTargets = targetsForThisBlockNames.map(name => ({ 
-        name: name, 
-        symbol: symbols[Math.floor(Math.random() * symbols.length)] 
+
+    const blockTargets = targetsForThisBlockNames.map(name => ({
+        name: name,
+        symbol: symbols[Math.floor(Math.random() * symbols.length)]
     }));
 
     let currentTargetIdx = 0;
-    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
+    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel));
 
-    for (let i = 0; i < trialsPerBlock; i++) { 
-      // Der Target-App-Wechsel findet alle 20 Trials statt (i = 20, 40, 60, 80, 100)
-      // currentTargetIdx wird inkrementiert und durch Modulo-Operation auf die Länge von blockTargets begrenzt.
-      // Da blockTargets nun 6 Elemente hat und 6 Wechsel (120/20=6) stattfinden, wird jeder der 6 Targets genau einmal verwendet.
-      if (i > 0 && i % 20 === 0) { 
-        currentTargetIdx = (currentTargetIdx + 1) % blockTargets.length; 
-        block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
-      }
-      
-      const currentCondition = trialConditionsArr[i]; 
-      let currentTarget = blockTargets[currentTargetIdx]; 
+    for (let i = 0; i < trialsPerBlock; i++) {
+        if (i > 0 && i % 20 === 0) {
+            currentTargetIdx = (currentTargetIdx + 1) % blockTargets.length;
+            block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel));
+        }
 
-      let gridAppsNames;
-      const numAppsInGrid = 8; 
+        const currentCondition = trialConditionsArr[i];
+        let currentTarget = blockTargets[currentTargetIdx];
 
-      if (currentCondition.isTargetPresent) {
-          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
-          // Da der globalDistractorPool bereits alle potentiellen Ziel-Apps ausschließt, ist diese Filterung technisch redundant,
-          // macht aber die Absicht explizit: Das aktuelle Ziel wird nicht als Distraktor angezeigt.
-          const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
-          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid - 1);
-          gridAppsNames.push(currentTarget.name); 
-      } else {
-          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
-          const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
-          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid); 
-      }
+        let gridAppsNames;
+        const numAppsInGrid = 8;
 
-      let gridApps = jsPsych.randomization.shuffle(gridAppsNames).map(name => ({
-        name: name,
-        symbol: (currentCondition.isTargetPresent && name === currentTarget.name) 
-                  ? currentTarget.symbol 
-                  : symbols[Math.floor(Math.random() * symbols.length)],
-        isTarget: (currentCondition.isTargetPresent && name === currentTarget.name)
-      }));
+        if (currentCondition.isTargetPresent) {
+            const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
+            gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid - 1);
+            gridAppsNames.push(currentTarget.name);
+        } else {
+            const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
+            gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid);
+        }
 
-      block.push(getFixationTrial(blockLabel)); 
-      block.push(getSearchTrial(
-        gridApps,
-        highlight,
-        blockLabel,
-        currentCondition.probeType, 
-        blockLabel,
-        currentCondition.isTargetPresent 
-      ));
+        let gridApps = jsPsych.randomization.shuffle(gridAppsNames).map(name => ({
+            name: name,
+            symbol: (currentCondition.isTargetPresent && name === currentTarget.name)
+                ? currentTarget.symbol
+                : symbols[Math.floor(Math.random() * symbols.length)],
+            isTarget: (currentCondition.isTargetPresent && name === currentTarget.name)
+        }));
+
+        block.push(getFixationTrial(blockLabel));
+        block.push(getSearchTrial(
+            gridApps,
+            highlight,
+            blockLabel,
+            currentCondition.probeType,
+            blockLabel,
+            currentCondition.isTargetPresent
+        ));
     }
 
-    // Alle Trials dieses Blocks mit block_num markieren
+    // Alle Trials dieses Blocks mit internalBlockNum markieren
     block.forEach(trial => {
-      if (!trial.data) trial.data = {};
-      trial.data.block_num = currentBlockNum;
+        if (!trial.data) trial.data = {};
+        trial.data.block_num = internalBlockNum; // WICHTIG: Hier wird der interne Block gezählt (0 oder 1)
     });
     return block;
-  }
+}
 
 
   function getRectDistance(rect1, rect2) {
@@ -1568,7 +1565,7 @@
       let hasSufficientOverlapWithNonTarget = false;
       for (const rect of nonTargetRects) {
         const overlap = getOverlapArea(currentConfirmRect, rect);
-        if (overlap / buttonArea >= 0.75) {
+        if (overlap / buttonArea >= 1.0) {
           hasSufficientOverlapWithNonTarget = true;
           break;
         }
@@ -1732,13 +1729,13 @@
   startPage,
 
   // Schritt 2: Erster Block (block_num = 0)
-  ...makeBlockTrials(randomized_blocks[0].highlight, randomized_blocks[0].label, block1Conditions, 0),
+  ...makeBlockTrials(randomized_blocks[0].highlight, randomized_blocks[0].label, block1Conditions, 0, 1),
 
   // Schritt 3: Pause / Übergang
   midBlockBreak,
 
   // Schritt 4: Zweiter Block (block_num = 1)
-  ...makeBlockTrials(randomized_blocks[1].highlight, randomized_blocks[1].label, block2Conditions, 1)
+  ...makeBlockTrials(randomized_blocks[1].highlight, randomized_blocks[1].label, block2Conditions, 1, 2)
 ];
 
 jsPsych.run(timeline);
