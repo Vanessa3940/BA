@@ -202,18 +202,18 @@
         .confirm-box {
           position: absolute;
           background-color: #fff;
-          color: #1976d2;
+          color: #555;/*#1976d2;*/
           padding: 0.2vw 0.7vw;
           border-radius: 8px;
           font-size: 1vw;
           cursor: pointer;
           z-index: 20;
-          border: 2px solid  #1976d2;
+          border: 2px solid #ccc; /*solid  #1976d2;*/
           font-weight: 500;
           box-shadow: none;
           font-family: inherit;
-          width: 4vw;
-          height: 2.2vw;
+          width: 3.6vw;
+          height: 1.9vw;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -338,7 +338,7 @@
         @media (max-width: 1024px) { 
           /* --- Allgemeine mobile Anpassungen (können auch Haupttrials betreffen) --- */
           .sap-overview { font-size: 26px; }
-          .confirm-box { font-size: 13px; width: 60px; height: 40px; }
+          .confirm-box { font-size: 10px; width: 40px; height: 20px; }
           .feedback-text-overlay { font-size: 26px; }
   
           /* --- Spezifische Anpassungen FÜR DIE PRACTICE AREA auf kleineren Bildschirmen --- */
@@ -513,7 +513,7 @@
   const CONFIRM_BUTTON_DELAY_MS = 60;
   // NEUE KONSTANTE FÜR FEEDBACK-DAUER IN ÜBUNGSRUNDEN
   const FEEDBACK_DURATION_MS = 700; 
-  // NEUE KONSTANTE FÜR LÄNGERES FEEDBACK BEI FEHLERN IM NO-PROBE TRIAL DER ÜBUNG
+  // NEUE KONSTANTE FÜR LÄNGERES FEEDBACK BEI FEHLERN IM no_p TRIAL DER ÜBUNG
   const NO_PROBE_ERROR_FEEDBACK_DURATION_MS = 2000;
 
 
@@ -571,14 +571,14 @@
         //    - Nur Trials, deren 'block_num' definiert ist und nicht -1 ist (da -1 für irrelevante Trials wie Preload, Anweisungen verwendet wird).
         //    - Korrektur der 'Smart Quotes' zu geraden einfachen Anführungszeichen.
         let data_to_send = all_trials_raw.trials.map(trial => ({
-            block_type: trial.block_type ?? null,
+            b_t: trial.block_type ?? null,
             block_num: trial.block_num ?? null,
-            rt_select: trial.rt_select != null ? Math.round(trial.rt_select) : null,
-            target_present: trial.is_target_present ?? null,
-            correct_response: trial.is_response_correct_search ?? null,
-            probe_type: trial.probe_type ?? trial.probe_type_practice ?? null,
-            rt_confirm: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
-            key_no_probe: trial.accidental_keypress_no_probe ?? null
+            rt_sel: trial.rt_select != null ? Math.round(trial.rt_select) : null,
+            tar_pres: trial.is_target_present ?? null,
+            cor_resp: trial.is_response_correct_search ?? null,
+            p_type: trial.probe_type ?? trial.probe_type_practice ?? null,
+            rt_con: trial.rt_confirm != null ? Math.round(trial.rt_confirm) : null,
+            key_no_p: trial.accidental_keypress_no_probe ?? null
 
           })).filter(trial => trial.block_num == 0 || trial.block_num == 1)
         ;
@@ -606,7 +606,7 @@
   });
 
   // ==== BLOCKS UND PROBE-TYPEN DEFINITION ====
-  const trialsPerBlock = 120; 
+  const trialsPerBlock = 140; 
 
   function generateBlockConditions(numTrials) {
       const conditions = [];
@@ -614,9 +614,9 @@
       const targetAbsentCount = numTrials / 2;  // 60
 
       const probeDistribution = {
-          'on-probe': 0.40, // 40%
-          'off-probe': 0.40, // 40%
-          'no-probe': 0.20  // 20%
+          'on_p': 0.40, // 40%
+          'off_p': 0.40, // 40%
+          'no_p': 0.20  // 20%
       };
 
       const addConditions = (isTargetPresent, count) => {
@@ -672,13 +672,13 @@
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
         <p>Das Experiment wird ungefähr <b>30 Minuten</b> dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
-        <p>Das Experiment sollte an einem <b>Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur</b< durchgeführt werden, 
-          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.
-          Für einen optimalen Ablauf sollten Sie außerdem sicherstellen, dass ihr Browser-Fenster sich im <b>Vollbildmodus</b> befindet.</p>
-        <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
-        <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
-          immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
-        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf "Experiment starten", um zu beginnen.</p>
+        <p>Das Experiment sollte an einem <b>Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur</b> durchgeführt werden, 
+          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.</p>
+        <p>Für einen optimalen Ablauf sollten Sie außerdem sicherstellen, dass ihr Browser-Fenster sich im <b>Vollbildmodus</b> befindet - arbeiten Sie an einem 
+          großen externen Bildschirm, dann können Sie sich das Browser-Fenster so hinziehen, wie es am besten passt (Vollbildmodus wird hier nicht empfohlen).</p>
+        <p>Sie können das Experiment <b>jederzeit unterbrechen</b>, es wird allerdings auch während des Experiments
+          immer wieder Möglichkeiten geben, kleine Pausen einzulegen, z.B. auf Seiten mit Instruktionen oder wenn eine nue Ziel-App gezeigt wird).</p>
+        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf <b>"Experiment starten"</b>, um zu beginnen.</p>
       </div>
     `,
     choices: ['Experiment starten'],
@@ -851,8 +851,8 @@
         });
 
         let trialFinished = false; // Flag, um sicherzustellen, dass finishTrial nur einmal aufgerufen wird
-        let accidentalKeyPressListener = null; // Deklariert für Hauptblock `no-probe` Logik
-        let noProbeTimeout = null; // Deklariert für Hauptblock `no-probe` Logik
+        let accidentalKeyPressListener = null; // Deklariert für Hauptblock `no_p` Logik
+        let noProbeTimeout = null; // Deklariert für Hauptblock `no_p` Logik
 
 
         currentKeyListener = (e) => { // Definition des Listeners
@@ -887,12 +887,12 @@
               document.removeEventListener('keydown', currentKeyListener, true);
               currentKeyListener = null; // Referenz löschen
 
-              // --- NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
-              if (currentTrialProbeType === 'no-probe') {
+              // --- NEUE LOGIK FÜR no_p TRIALS IM HAUPTBLOCK ---
+              if (currentTrialProbeType === 'no_p') {
                   const startTimeForNoProbeWait = performance.now();
                   const noProbeWaitDuration = 1500; // 2 Sekunden
 
-                  let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no-probe Handler
+                  let noProbeTrialFullyFinished = false; // Lokales Flag für diesen spezifischen no_p Handler
 
                   accidentalKeyPressListener = (e_accidental) => {
                       const pressedKeyAccidental = e_accidental.key.toLowerCase();
@@ -935,7 +935,7 @@
                       }
                   }, noProbeWaitDuration); // Warte 1.5s
               } 
-              // --- ENDE NEUE LOGIK FÜR NO-PROBE TRIALS IM HAUPTBLOCK ---
+              // --- ENDE NEUE LOGIK FÜR no_p TRIALS IM HAUPTBLOCK ---
               else {
                   setTimeout(() => showConfirmButton((confirmData) => { 
                     const confirmPosition = window.confirmPosition; 
@@ -969,15 +969,15 @@
   // ==== PRACTICE TRIAL ====
   // Definiere die Konfigurationen für die Übungstrials
   const practiceTrialConfigurations = [
-      { isTargetPresent: true, probeType: 'on-probe' },
-      { isTargetPresent: false, probeType: 'on-probe' },
-      { isTargetPresent: true, probeType: 'off-probe' },
-      { isTargetPresent: false, probeType: 'off-probe' },
-      { isTargetPresent: true, probeType: 'no-probe' },
-      { isTargetPresent: false, probeType: 'no-probe' },
+      { isTargetPresent: true, probeType: 'on_p' },
+      { isTargetPresent: false, probeType: 'on_p' },
+      { isTargetPresent: true, probeType: 'off_p' },
+      { isTargetPresent: false, probeType: 'off_p' },
+      { isTargetPresent: true, probeType: 'no_p' },
+      { isTargetPresent: false, probeType: 'no_p' },
       // Optional: Wiederhole einige Typen für zusätzliche Übung
-      { isTargetPresent: true, probeType: 'on-probe' }, 
-      { isTargetPresent: false, probeType: 'off-probe' } 
+      { isTargetPresent: true, probeType: 'on_p' }, 
+      { isTargetPresent: false, probeType: 'off_p' } 
   ];
   const totalPracticeTrials = practiceTrialConfigurations.length; 
 
@@ -1047,7 +1047,7 @@
           : `du festgestellt hast, dass die Ziel-App nicht im Raster ist. Drücke die Taste ${keyAbsentText}.`;
 
         let confirmInstruction;
-        if (probeType === 'no-probe') {
+        if (probeType === 'no_p') {
             confirmInstruction = `<p><b>Wichtig:</b> In diesem Trial wird <b>kein</b> "Bestätigen"-Feld erscheinen. Der Trial endet automatisch nach deiner ersten Reaktion. Merke dir: danach KEINE Taste drücken, das Raster bleibt noch 1.5s sichtbar!</p>`;
         } else {
             confirmInstruction = `<p>Danach erscheint das "Bestätigen"-Feld, auf das du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>`;
@@ -1103,8 +1103,8 @@
 
       // --- HIER WIRD DIE DENKBLASE ROT HERVORGEHOBEN ---
       const thoughtBubbleEl = document.querySelector('.thought-bubble');
-      // Highlight: erster Trial, zweiter Trial, oder wenn probeType 'no-probe' ist
-      if (thoughtBubbleEl && (trialNum === 1 || trialNum === 2 || probeType === 'no-probe')) {
+      // Highlight: erster Trial, zweiter Trial, oder wenn probeType 'no_p' ist
+      if (thoughtBubbleEl && (trialNum === 1 || trialNum === 2 || probeType === 'no_p')) {
           thoughtBubbleEl.classList.add('highlight-red');
           setTimeout(() => {
               thoughtBubbleEl.classList.remove('highlight-red');
@@ -1173,8 +1173,8 @@
                     targetAppElement.classList.remove('correct-feedback-highlight-green');
                 }
                 
-                if (probeType === 'no-probe') {
-                    // Logik für no-probe Übungstrials: zusätzliche Reaktionen abfangen
+                if (probeType === 'no_p') {
+                    // Logik für no_p Übungstrials: zusätzliche Reaktionen abfangen
                     let accidentalKeyPressListener = null;
                     const startTimeForNoProbeWait = performance.now();
                     const noProbeWaitDuration = 1500; // 1.5 Sekunden
@@ -1234,7 +1234,7 @@
                     }, noProbeWaitDuration); // Warte 1.5s
 
                 } else {
-                    // Standardfall für on-probe und off-probe: Bestätigen-Button anzeigen
+                    // Standardfall für on_p und off_p: Bestätigen-Button anzeigen
                     setTimeout(() => showConfirmButton((confirmData) => jsPsych.finishTrial({ ...searchPhaseData, ...confirmData }), true, probeType), CONFIRM_BUTTON_DELAY_MS);
                 }
             }, FEEDBACK_DURATION_MS);
@@ -1368,87 +1368,84 @@
   // Der globalDistractorPool enthält alle App-Namen, die NIEMALS Ziel-Apps sein werden (weder jetzt noch später)
   const globalDistractorPool = appNames.filter(name => !allExperimentTargetNames.includes(name));
 
-  function makeBlockTrials(highlight, blockLabel, trialConditionsArr, blockOrderNumber) { 
+  function makeBlockTrials(highlight, blockLabel, trialConditionsArr, internalBlockNum, displayBlockNum) {
     const block = [];
-    const currentBlockNum = blockOrderNumber; // Lokale Blocknummer für alle Trials dieses Blocks
-    
-    const displayBlockName = `Block ${blockOrderNumber}`;
-    block.push(getInstructions(displayBlockName, highlight, blockLabel)); 
-    
-    // makePracticeBlock wird nun mit dem displayBlockName aufgerufen
+
+    // Der displayBlockNum wird für die Anzeige an den Benutzer verwendet
+    const displayBlockName = `Block ${displayBlockNum}`;
+
+    // Der internalBlockNum wird weiterhin für die Datenspeicherung verwendet
+    // const currentBlockNum = blockOrderNumber; // Diese Zeile entfernen oder auskommentieren
+
+    block.push(getInstructions(displayBlockName, highlight, blockLabel));
+
+    // makePracticeBlock nutzt nun auch displayBlockName
     block.push(...makePracticeBlock(highlight, displayBlockName));
 
-
     let targetsForThisBlockNames;
-    // GEÄNDERT: Nun 6 Targets pro Block, um eine volle Rotation (120 Trials / 20 Trials pro Target = 6 Targets) zu ermöglichen
-    if (blockOrderNumber === 1) {
-        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 6); // Die ersten 6 der 12 Targets
-    } else { 
-        targetsForThisBlockNames = allExperimentTargetNames.slice(6, 12); // Die nächsten 6 der 12 Targets
+    // Die Logik zur Auswahl der Ziel-Apps sollte weiterhin vom internalBlockNum (0 oder 1) abhängen,
+    // da dies die tatsächliche Reihenfolge der Blöcke repräsentiert.
+    if (internalBlockNum === 0) { // Dies ist der erste Block im Experiment (intern 0)
+        targetsForThisBlockNames = allExperimentTargetNames.slice(0, 6);
+    } else { // Dies ist der zweite Block im Experiment (intern 1)
+        targetsForThisBlockNames = allExperimentTargetNames.slice(6, 12);
     }
-    
-    const blockTargets = targetsForThisBlockNames.map(name => ({ 
-        name: name, 
-        symbol: symbols[Math.floor(Math.random() * symbols.length)] 
+
+    const blockTargets = targetsForThisBlockNames.map(name => ({
+        name: name,
+        symbol: symbols[Math.floor(Math.random() * symbols.length)]
     }));
 
     let currentTargetIdx = 0;
-    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
+    block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel));
 
-    for (let i = 0; i < trialsPerBlock; i++) { 
-      // Der Target-App-Wechsel findet alle 20 Trials statt (i = 20, 40, 60, 80, 100)
-      // currentTargetIdx wird inkrementiert und durch Modulo-Operation auf die Länge von blockTargets begrenzt.
-      // Da blockTargets nun 6 Elemente hat und 6 Wechsel (120/20=6) stattfinden, wird jeder der 6 Targets genau einmal verwendet.
-      if (i > 0 && i % 20 === 0) { 
-        currentTargetIdx = (currentTargetIdx + 1) % blockTargets.length; 
-        block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel)); 
-      }
-      
-      const currentCondition = trialConditionsArr[i]; 
-      let currentTarget = blockTargets[currentTargetIdx]; 
+    for (let i = 0; i < trialsPerBlock; i++) {
+        if (i > 0 && i % 20 === 0) {
+            currentTargetIdx = (currentTargetIdx + 1) % blockTargets.length;
+            block.push(getShowTarget(blockTargets[currentTargetIdx], highlight, blockLabel));
+        }
 
-      let gridAppsNames;
-      const numAppsInGrid = 8; 
+        const currentCondition = trialConditionsArr[i];
+        let currentTarget = blockTargets[currentTargetIdx];
 
-      if (currentCondition.isTargetPresent) {
-          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
-          // Da der globalDistractorPool bereits alle potentiellen Ziel-Apps ausschließt, ist diese Filterung technisch redundant,
-          // macht aber die Absicht explizit: Das aktuelle Ziel wird nicht als Distraktor angezeigt.
-          const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
-          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid - 1);
-          gridAppsNames.push(currentTarget.name); 
-      } else {
-          // availableDistractors filtert den globalen Distraktor-Pool, um sicherzustellen, dass die aktuelle Ziel-App nicht enthalten ist.
-          const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
-          gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid); 
-      }
+        let gridAppsNames;
+        const numAppsInGrid = 8;
 
-      let gridApps = jsPsych.randomization.shuffle(gridAppsNames).map(name => ({
-        name: name,
-        symbol: (currentCondition.isTargetPresent && name === currentTarget.name) 
-                  ? currentTarget.symbol 
-                  : symbols[Math.floor(Math.random() * symbols.length)],
-        isTarget: (currentCondition.isTargetPresent && name === currentTarget.name)
-      }));
+        if (currentCondition.isTargetPresent) {
+            const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
+            gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid - 1);
+            gridAppsNames.push(currentTarget.name);
+        } else {
+            const availableDistractors = globalDistractorPool.filter(name => name !== currentTarget.name);
+            gridAppsNames = jsPsych.randomization.sampleWithoutReplacement(availableDistractors, numAppsInGrid);
+        }
 
-      block.push(getFixationTrial(blockLabel)); 
-      block.push(getSearchTrial(
-        gridApps,
-        highlight,
-        blockLabel,
-        currentCondition.probeType, 
-        blockLabel,
-        currentCondition.isTargetPresent 
-      ));
+        let gridApps = jsPsych.randomization.shuffle(gridAppsNames).map(name => ({
+            name: name,
+            symbol: (currentCondition.isTargetPresent && name === currentTarget.name)
+                ? currentTarget.symbol
+                : symbols[Math.floor(Math.random() * symbols.length)],
+            isTarget: (currentCondition.isTargetPresent && name === currentTarget.name)
+        }));
+
+        block.push(getFixationTrial(blockLabel));
+        block.push(getSearchTrial(
+            gridApps,
+            highlight,
+            blockLabel,
+            currentCondition.probeType,
+            blockLabel,
+            currentCondition.isTargetPresent
+        ));
     }
 
-    // Alle Trials dieses Blocks mit block_num markieren
+    // Alle Trials dieses Blocks mit internalBlockNum markieren
     block.forEach(trial => {
-      if (!trial.data) trial.data = {};
-      trial.data.block_num = currentBlockNum;
+        if (!trial.data) trial.data = {};
+        trial.data.block_num = internalBlockNum; // WICHTIG: Hier wird der interne Block gezählt (0 oder 1)
     });
     return block;
-  }
+}
 
 
   function getRectDistance(rect1, rect2) {
@@ -1467,7 +1464,7 @@
 
 
   const showConfirmButton = (callback, isPractice = false, probeType = null) => {
-  if (probeType === 'no-probe') {
+  if (probeType === 'no_p') {
     callback({
       rt_confirm: null,
       response_key_confirm: null,
@@ -1515,10 +1512,10 @@
 
   // probeType sicherstellen
   if (isPractice && !probeType) {
-    probeType = 'on-probe'; 
+    probeType = 'on_p'; 
   } else if (!isPractice && !probeType) {
-    console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off-probe'.");
-    probeType = 'off-probe';
+    console.error("showConfirmButton wurde ohne probeType im Haupt-Trial aufgerufen. Using fallback 'off_p'.");
+    probeType = 'off_p';
   }
 
   let confirmX = leftBoundary; // Initialisierung
@@ -1564,7 +1561,7 @@
     }
 
 
-    if (probeType === 'on-probe') {
+    if (probeType === 'on_p') {
       let hasSufficientOverlapWithNonTarget = false;
       for (const rect of nonTargetRects) {
         const overlap = getOverlapArea(currentConfirmRect, rect);
@@ -1582,7 +1579,7 @@
 
       if (hasSufficientOverlapWithNonTarget && !overlapsTarget && !hasOverlapWithThoughtBubble) found = true;
     } else {
-      // off-probe: keine Überlappung und nicht zu nah an Apps
+      // off_p: keine Überlappung und nicht zu nah an Apps
       let anyOverlap = false;
       let tooCloseToApps = false;
       for (const rect of rects) {
@@ -1732,13 +1729,13 @@
   startPage,
 
   // Schritt 2: Erster Block (block_num = 0)
-  ...makeBlockTrials(randomized_blocks[0].highlight, randomized_blocks[0].label, block1Conditions, 0),
+  ...makeBlockTrials(randomized_blocks[0].highlight, randomized_blocks[0].label, block1Conditions, 0, 1),
 
   // Schritt 3: Pause / Übergang
   midBlockBreak,
 
   // Schritt 4: Zweiter Block (block_num = 1)
-  ...makeBlockTrials(randomized_blocks[1].highlight, randomized_blocks[1].label, block2Conditions, 1)
+  ...makeBlockTrials(randomized_blocks[1].highlight, randomized_blocks[1].label, block2Conditions, 1, 2)
 ];
 
 jsPsych.run(timeline);

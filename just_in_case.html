@@ -338,7 +338,7 @@
         @media (max-width: 1024px) { 
           /* --- Allgemeine mobile Anpassungen (können auch Haupttrials betreffen) --- */
           .sap-overview { font-size: 26px; }
-          .confirm-box { font-size: 10px; width: 40px; height: 20px; } /*font-size: 13px; width: 60px; height: 40px;*/
+          .confirm-box { font-size: 10px; width: 40px; height: 20px; }
           .feedback-text-overlay { font-size: 26px; }
   
           /* --- Spezifische Anpassungen FÜR DIE PRACTICE AREA auf kleineren Bildschirmen --- */
@@ -432,18 +432,6 @@
         /* .jspsych-trial:has(.practice-area) > .jspsych-prompt {
             display: none !important;
         } */
-
-         /* NEUE MEDIA QUERY FÜR SEHR GROSSE BILDSCHIRME */
-         @media (min-width: 1921px) { /* Greift für Bildschirme, die breiter als 1920px sind */
-          .confirm-box {
-            width: 100px; /* Feste Breite für große Bildschirme, z.B. 100 Pixel */
-            height: 40px; /* Feste Höhe für große Bildschirme, z.B. 40 Pixel */
-            font-size: 18px; /* Komfortable Schriftgröße, z.B. 18 Pixel */
-            padding: 8px 15px; /* Angepasstes Padding */
-            /* Wenn du color oder border auch für große Bildschirme anpassen möchtest,
-               könntest du das hier auch tun. */
-          }
-        }
       </style>
 
   <script src="https://unpkg.com/@jspsych/plugin-call-function@1.1.1"></script> 
@@ -684,13 +672,13 @@
       <div style="max-width: 900px; margin: 0 auto; text-align: left;">
         <h2>Willkommen zum Experiment</h2>
         <p>Das Experiment wird ungefähr <b>30 Minuten</b> dauern. Bitte stellen Sie sicher, dass sie während dieser Zeit nicht gestört werden.</p>
-        <p>Das Experiment sollte an einem <b>Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur</b< durchgeführt werden, 
-          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.
-          Für einen optimalen Ablauf sollten Sie außerdem sicherstellen, dass ihr Browser-Fenster sich im <b>Vollbildmodus</b> befindet.</p>
-        <p>In diesem Experiment geht es darum, bestimmte Ziel-Apps unter anderen Apps zu finden und anschließend die Suche zu bestätigen.</p>
-        <p>Sie können das Experiment jederzeit unterbrechen, es wird allerdings auch während des Experiments
-          immer wieder Möglichkeiten geben, kleine Pausen einzulegen.</p>
-        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf "Experiment starten", um zu beginnen.</p>
+        <p>Das Experiment sollte an einem <b>Laptop / Computer oder an einem Tablet mit angeschlossener Tastatur</b> durchgeführt werden, 
+          weil man im Laufe des Experiments mit verschiedenen Tasten auf Stimuli reagieren muss.</p>
+        <p>Für einen optimalen Ablauf sollten Sie außerdem sicherstellen, dass ihr Browser-Fenster sich im <b>Vollbildmodus</b> befindet - arbeiten Sie an einem 
+          großen externen Bildschirm, dann können Sie sich das Browser-Fenster so hinziehen, wie es am besten passt (Vollbildmodus wird hier nicht empfohlen).</p>
+        <p>Sie können das Experiment <b>jederzeit unterbrechen</b>, es wird allerdings auch während des Experiments
+          immer wieder Möglichkeiten geben, kleine Pausen einzulegen, z.B. auf Seiten mit Instruktionen oder wenn eine nue Ziel-App gezeigt wird).</p>
+        <p style="text-align: center; margin-top: 30px;">Klicken Sie auf <b>"Experiment starten"</b>, um zu beginnen.</p>
       </div>
     `,
     choices: ['Experiment starten'],
