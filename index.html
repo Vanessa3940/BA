@@ -202,7 +202,7 @@
         .confirm-box {
           position: absolute;
           background-color: #fff;
-          color: #555;/*#1976d2;*/
+          color: #030303;/*#1976d2;*/
           padding: 0.2vw 0.7vw;
           border-radius: 8px;
           font-size: 1vw;
@@ -1048,7 +1048,8 @@
 
         let confirmInstruction;
         if (probeType === 'no_p') {
-            confirmInstruction = `<p><b>Wichtig:</b> In diesem Trial wird <b>kein</b> "Bestätigen"-Feld erscheinen. Der Trial endet automatisch nach deiner ersten Reaktion. Merke dir: danach KEINE Taste drücken, das Raster bleibt noch 1.5s sichtbar!</p>`;
+            confirmInstruction = `<p><b>Wichtig:</b> In diesem Trial wird <b>kein</b> "Bestätigen"-Feld erscheinen. Der Trial endet automatisch 
+              nach deiner ersten Reaktion. Merke dir: danach KEINE Taste drücken, das Raster bleibt noch kurz sichtbar!</p>`;
         } else {
             confirmInstruction = `<p>Danach erscheint das "Bestätigen"-Feld, auf das du ebenfalls mit ${keyPresentText} oder ${keyAbsentText} reagieren sollst.</p>`;
         }
@@ -1337,7 +1338,7 @@
                 <li>Drücken Sie die Taste <b>${KEY_TARGET_PRESENT.toUpperCase()}</b>, wenn Sie die Ziel-App entdecken.</li>
                 <li>Drücken Sie die Taste <b>${KEY_TARGET_ABSENT.toUpperCase()}</b>, wenn Sie feststellen, dass die Ziel-App nicht vorhanden ist.</li>
                 <li><b>Wichtig:</b> Wenn das "Bestätigen"-Feld NICHT erscheint, drücken Sie KEINE weitere Taste. 
-                  Das Raster bleibt 1,5 Sekunden sichtbar, danach geht es automatisch weiter.</li>
+                  Das Raster bleibt noch kurz sichtbar sichtbar, danach geht es automatisch weiter.</li>
                   <li><b>In den nachfolgenden Trials gibt es kein Feedback mehr für richtige oder falsche Reaktionen auf Ziel-App 
                     und Bestätigen-Feld.</b></li>
             </ul>
